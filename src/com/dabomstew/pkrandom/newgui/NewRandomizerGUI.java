@@ -300,6 +300,8 @@ public class NewRandomizerGUI {
     private JCheckBox paEnsureTwoAbilitiesCheckbox;
     private JCheckBox miscUpdateRotomFormeTypingCheckBox;
     private JCheckBox miscDisableLowHPMusicCheckBox;
+    private JCheckBox miscGuaranteedPokemonCatchingCheckBox;
+    private JButton openExtractedFileSystemButton;
 
     private static JFrame frame;
 
@@ -310,7 +312,8 @@ public class NewRandomizerGUI {
     private OperationDialog opDialog;
 
     private ResourceBundle bundle;
-    protected RomHandler.Factory[] checkHandlers;
+    protected RomHandler.Factory[] checkRomHandlers;
+    protected RomHandler.Factory[] checkExtractedDirectoryHandlers;
     private RomHandler romHandler;
 
     private boolean presetMode = false;
@@ -321,6 +324,7 @@ public class NewRandomizerGUI {
     private JPanel liveTweaksPanel = new JPanel();
 
     private JFileChooser romOpenChooser = new JFileChooser();
+    private JFileChooser extractedFilesystemOpenChooser = new JFileChooser();
     private JFileChooser romSaveChooser = new JFileChooser();
     private JFileChooser qsOpenChooser = new JFileChooser();
     private JFileChooser qsSaveChooser = new JFileChooser();
@@ -351,9 +355,10 @@ public class NewRandomizerGUI {
         ToolTipManager.sharedInstance().setDismissDelay(Integer.MAX_VALUE);
         bundle = ResourceBundle.getBundle("com/dabomstew/pkrandom/newgui/Bundle");
         testForRequiredConfigs();
-        checkHandlers = new RomHandler.Factory[] { new Gen1RomHandler.Factory(), new Gen2RomHandler.Factory(),
+        checkRomHandlers = new RomHandler.Factory[] { new Gen1RomHandler.Factory(), new Gen2RomHandler.Factory(),
                 new Gen3RomHandler.Factory(), new Gen4RomHandler.Factory(), new Gen5RomHandler.Factory(),
                 new Gen6RomHandler.Factory(), new Gen7RomHandler.Factory() };
+        checkExtractedDirectoryHandlers = new RomHandler.Factory[] { new SwShRomHandler.Factory(), new BDSPRomHandler.Factory() };
 
         haveCheckedCustomNames = false;
         attemptReadConfig();
@@ -411,6 +416,7 @@ public class NewRandomizerGUI {
         frame.setTitle(String.format(bundle.getString("GUI.windowTitle"),Version.VERSION_STRING));
 
         openROMButton.addActionListener(e -> loadROM());
+        openExtractedFileSystemButton.addActionListener(e -> loadExtractedFilesystem());
         pbsUnchangedRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pbsShuffleRadioButton.addActionListener(e -> enableOrDisableSubControls());
         pbsRandomRadioButton.addActionListener(e -> enableOrDisableSubControls());
@@ -622,6 +628,7 @@ public class NewRandomizerGUI {
 
     private void initFileChooserDirectories() {
         romOpenChooser.setCurrentDirectory(new File(SysConstants.ROOT_PATH));
+        extractedFilesystemOpenChooser.setCurrentDirectory(new File(SysConstants.ROOT_PATH));
         romSaveChooser.setCurrentDirectory(new File(SysConstants.ROOT_PATH));
         if (new File(SysConstants.ROOT_PATH + "settings/").exists()) {
             qsOpenChooser.setCurrentDirectory(new File(SysConstants.ROOT_PATH + "settings/"));
@@ -759,7 +766,7 @@ public class NewRandomizerGUI {
                 }
             }
 
-            for (RomHandler.Factory rhf : checkHandlers) {
+            for (RomHandler.Factory rhf : checkRomHandlers) {
                 if (rhf.isLoadable(fh.getAbsolutePath())) {
                     this.romHandler = rhf.create(RandomSource.instance());
                     if (!usedLauncher && this.romHandler instanceof Abstract3DSRomHandler) {
@@ -782,6 +789,51 @@ public class NewRandomizerGUI {
                         } catch (EncryptedROMException ex) {
                             JOptionPane.showMessageDialog(mainPanel,
                                     String.format(bundle.getString("GUI.encryptedRom"), fh.getAbsolutePath()));
+                        } catch (Exception ex) {
+                            attemptToLogException(ex, "GUI.loadFailed", "GUI.loadFailedNoLog", null, null);
+                        }
+                        final boolean loadSuccess = romLoaded;
+                        SwingUtilities.invokeLater(() -> {
+                            this.opDialog.setVisible(false);
+                            this.initialState();
+                            if (loadSuccess) {
+                                this.romLoaded();
+                            }
+                        });
+                    });
+                    t.start();
+
+                    return;
+                }
+            }
+            JOptionPane.showMessageDialog(mainPanel,
+                    String.format(bundle.getString("GUI.unsupportedRom"), fh.getName()));
+        }
+    }
+
+    private void loadExtractedFilesystem() {
+        extractedFilesystemOpenChooser.setSelectedFile(null);
+        extractedFilesystemOpenChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        int returnVal = extractedFilesystemOpenChooser.showOpenDialog(mainPanel);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            final File fh = extractedFilesystemOpenChooser.getSelectedFile();
+            try {
+                Utils.validateExtractedDirectory(fh);
+            } catch (Utils.InvalidExtractedDirectoryException e) {
+                JOptionPane.showMessageDialog(mainPanel, e.getMessage());
+                return;
+            }
+
+            for (RomHandler.Factory rhf : checkExtractedDirectoryHandlers) {
+                if (rhf.isLoadable(fh.getAbsolutePath())) {
+                    this.romHandler = rhf.create(RandomSource.instance());
+                    opDialog = new OperationDialog(bundle.getString("GUI.loadingText"), frame, true);
+                    Thread t = new Thread(() -> {
+                        boolean romLoaded = false;
+                        SwingUtilities.invokeLater(() -> opDialog.setVisible(true));
+                        try {
+                            this.romHandler.loadRom(fh.getAbsolutePath());
+                            romLoaded = true;
                         } catch (Exception ex) {
                             attemptToLogException(ex, "GUI.loadFailed", "GUI.loadFailedNoLog", null, null);
                         }
@@ -1408,7 +1460,7 @@ public class NewRandomizerGUI {
     // you're doing.
     private void reinitializeRomHandler(boolean batchRandomization) {
         String currentFN = this.romHandler.loadedFilename();
-        for (RomHandler.Factory rhf : checkHandlers) {
+        for (RomHandler.Factory rhf : checkRomHandlers) {
             if (rhf.isLoadable(currentFN)) {
                 this.romHandler = rhf.create(RandomSource.instance());
                 opDialog = new OperationDialog(bundle.getString("GUI.loadingText"), frame, true);
@@ -2009,6 +2061,9 @@ public class NewRandomizerGUI {
         openROMButton.setVisible(true);
         openROMButton.setEnabled(true);
         openROMButton.setSelected(false);
+        openExtractedFileSystemButton.setVisible(true);
+        openExtractedFileSystemButton.setEnabled(true);
+        openExtractedFileSystemButton.setSelected(false);
         randomizeSaveButton.setVisible(true);
         randomizeSaveButton.setEnabled(true);
         randomizeSaveButton.setSelected(false);
@@ -3735,6 +3790,12 @@ public class NewRandomizerGUI {
 
     private void populateDropdowns() {
         List<Pokemon> currentStarters = romHandler.getStarters();
+
+        // TODO: Delete this when Switch romhandlers do something
+        if (currentStarters == null) {
+            return;
+        }
+
         List<Pokemon> allPokes =
                 romHandler.generationOfPokemon() >= 6 ?
                         romHandler.getPokemonInclFormes()
