@@ -1093,7 +1093,9 @@ public class Randomizer {
             if (es.displayName != null) {
                 log.print("- " + es.displayName + " ");
             }
-            log.print("(rate=" + es.rate + ")");
+            if (es.rate != 0) {
+                log.print("(rate=" + es.rate + ")");
+            }
             log.println();
             for (Encounter e : es.encounters) {
                 StringBuilder sb = new StringBuilder();
@@ -1121,7 +1123,10 @@ public class Randomizer {
                 } else {
                     sb.append(e.level);
                 }
-                String whitespaceFormat = romHandler.generationOfPokemon() == 7 ? "%-31s" : "%-25s";
+                if (e.probability != 0) {
+                    sb.append(" (").append(e.probability).append("%)");
+                }
+                String whitespaceFormat = romHandler.generationOfPokemon() >= 7 ? "%-31s" : "%-25s";
                 log.print(String.format(whitespaceFormat, sb));
                 StringBuilder sb2 = new StringBuilder();
                 if (romHandler instanceof Gen1RomHandler) {

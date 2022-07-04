@@ -35,6 +35,9 @@ public class Encounter {
     public boolean isSOS;
     public SOSType sosType;
 
+    // Used only in Gen 8
+    public int probability;
+
     public String toString() {
         if (pokemon == null) {
             return "ERROR";

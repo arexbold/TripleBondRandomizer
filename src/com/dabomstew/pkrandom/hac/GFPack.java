@@ -191,6 +191,10 @@ public class GFPack {
         return -1;
     }
 
+    public byte[] getDataIndex(int index) {
+        return decompressedFiles[index];
+    }
+
     private class GFPackHeader {
         private static final int SIZE = 0x18;
         private static final long MAGIC = GFPack.MAGIC;

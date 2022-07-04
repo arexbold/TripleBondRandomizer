@@ -1,0 +1,207 @@
+namespace com.dabomstew.pkrandom.generated.swsh;
+
+table SwShPlacementAreaArchive {
+    placement_zones:[SwShPlacementZone];
+    hash:ulong;
+    description:string;
+    other_description:string;
+    unknown:SwShPlacementAreaF04;
+    field_05:float;
+    field_06:float;
+    field_07:float;
+    field_08:float;
+    field_09:float;
+    field_10:float;
+    field_11:float;
+    field_12:float;
+    field_13:float;
+    field_14:float;
+    field_15:float;
+    field_16:float;
+    field_17:float;
+    field_18:float;
+    field_19:float;
+    field_20:float;
+    field_21:float;
+    field_22:float;
+    field_23:float;
+    field_24:SwShPlacementAreaF24;
+    field_25:uint;
+    field_26:float;
+    field_27:ubyte;
+    field_28:ubyte;
+    field_29:ubyte;
+    field_30:ubyte;
+    field_31:float;
+    field_32:float;
+    field_33:ubyte;
+}
+
+table SwShPlacementAreaF04 {
+    field_00:float;
+    field_01:float;
+    field_02:float;
+
+    field_03:float;
+    field_04:float;
+    field_05:float;
+
+    field_06:float;
+    field_07:float;
+    field_08:float;
+
+    field_09:ulong;
+    field_10:ulong;
+    field_11:ulong;
+}
+
+table SwShPlacementAreaF24 {
+    field_00:ubyte;
+    field_01:SwShPlacementAreaUnknownTiny;
+    field_02:float;
+}
+
+table SwShPlacementAreaUnknownTiny {
+    field_00:float;
+    field_01:float;
+    field_02:float;
+}
+
+table SwShPlacementZone {
+    meta:SwShPlacementZoneMeta;
+    field_01:uint;
+    field_02:uint;
+    field_03:uint;
+    field_04:uint;
+    field_05:uint;
+    field_items:[SwShPlacementZoneFieldItemHolder];
+    field_07:uint;
+    field_08:uint;
+    field_09:uint;
+    field_0a:uint;
+    field_0b:uint;
+    field_0c:uint;
+    field_0d:uint;
+    field_0e:uint;
+    field_0f:uint;
+    field_11:uint;
+    field_12:uint;
+    field_13:uint;
+    field_14:uint;
+    field_15:uint;
+    field_16:uint;
+    field_17:uint;
+    field_18:uint;
+    field_19:uint;
+    field_1a:uint;
+    static_objects:[SwShPlacementZoneStaticObjectsHolder];
+    field_1c:uint;
+}
+
+table SwShPlacementZoneMeta {
+    field_00:SwShPlacementZoneMetaTripleXYZ;
+    zone_id:ulong;
+    hash_02:ulong;
+    field_03:string;
+    field_04:uint;
+    music:string;
+    field_06:float;
+    hash_07:ulong;
+    hash_08:ulong;
+    hash_09:ulong;
+    field_10:ubyte;
+    field_11:ubyte;
+    hash_12:ulong;
+    field_13:ubyte;
+    field_14:ubyte;
+    num_15:int;
+}
+
+table SwShPlacementZoneMetaTripleXYZ {
+    location_x:float;
+    location_y:float;
+    location_z:float;
+    rotation_x:float;
+    rotation_y:float;
+    rotation_z:float;
+    scale_x:float;
+    scale_y:float;
+    scale_z:float;
+    hash_object_name:ulong;
+    hash_10:ulong;
+    hash_11:ulong;
+}
+
+table SwShPlacementZoneFieldItemHolder {
+    field_00:SwShPlacementZoneFieldItem;
+}
+
+table SwShPlacementZoneFieldItem {
+    field_00:SwShPlacementZoneMetaTripleXYZ;
+    hash_01:ulong;
+    field_02:string;
+    field_03:float;
+    field_04:float;
+    hash_05:ulong;
+    flags:[ulong];
+    items:[uint];
+    quantity:byte;
+    field_09:uint;
+}
+
+table SwShPlacementZoneFieldItemA {
+    field_00:bool;
+    field_01:SwShFlatDummyObject;
+}
+
+table SwShFlatDummyObject {
+    field_00:ubyte;
+}
+
+table SwShPlacementZoneStaticObjectsHolder {
+    object:[SwShPlacementZoneStaticObject];
+}
+
+table SwShPlacementZoneStaticObject {
+    identifier:SwShPlacementZoneStaticObjectIdentifier;
+    field_01:uint;
+    field_02:uint;
+    field_03:uint;
+    field_04:ubyte;
+    spawns:[SwShPlacementZoneStaticObjectSpawn];
+    field_06:SwShPlacementZoneStaticObjectUnknown;
+    field_07:SwShPlacementZoneStaticObjectUnknown;
+}
+
+table SwShPlacementZoneStaticObjectIdentifier {
+    location_x:float;
+    location_y:float;
+    location_z:float;
+    field_3:uint;
+    field_4:uint;
+    field_5:uint;
+    field_6:float;
+    field_7:float;
+    field_8:float;
+    spawner_id:ulong;
+    field_a:ulong;
+    field_b:ulong;
+}
+
+table SwShPlacementZoneStaticObjectSpawn {
+    spawn_id:ulong;
+    description:string;
+    field_02:ulong;
+    field_03:uint;
+    field_04:SwShPlacementZoneStaticObjectUnknown;
+}
+
+table SwShPlacementZoneStaticObjectUnknown {
+    field_0:uint;
+    field_1:uint;
+    field_2:uint;
+    field_3:uint;
+    field_4:float;
+}
+
+root_type SwShPlacementAreaArchive;
