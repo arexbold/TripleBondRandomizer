@@ -25,17 +25,20 @@ package com.dabomstew.pkrandom.romhandlers;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
+import com.dabomstew.pkrandom.ctr.RomfsFile;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.io.RandomAccessFile;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
 
     private String loadedFN;
+    private Map<String, byte[]> changedFiles;
+    private byte[] main;
+    private boolean mainChanged;
 
     public AbstractSwitchRomHandler(Random random, PrintStream logStream) {
         super(random, logStream);
@@ -47,6 +50,7 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
             return false;
         }
         loadedFN = filename;
+        changedFiles = new HashMap<>();
         this.loadedROM(filename);
         return true;
     }
@@ -68,6 +72,7 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
     public boolean saveRomFile(String filename, long seed) {
         try {
             savingROM();
+            // TODO: Make this unsupported for Switch games
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -78,10 +83,66 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
     public boolean saveRomDirectory(String filename) {
         try {
             savingROM();
+            this.writeLayeredFS(filename);
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
         return true;
+    }
+
+    // TODO: Make this better, probably want a class for reading/writing Switch stuff
+    private void writeLayeredFS(String filename) throws IOException {
+        String layeredFSRootPath = filename + File.separator + "switch game" + File.separator;
+        File layeredFSRootDir = new File(layeredFSRootPath);
+        if (!layeredFSRootDir.exists()) {
+            layeredFSRootDir.mkdirs();
+        } else {
+            purgeDirectory(layeredFSRootDir);
+        }
+        String romfsRootPath = layeredFSRootPath + "romfs" + File.separator;
+        File romfsDir = new File(romfsRootPath);
+        if (!romfsDir.exists()) {
+            romfsDir.mkdirs();
+        }
+
+        if (mainChanged) {
+            // TODO: Is this what you do with main on Switch? I genuinely don't know
+            FileOutputStream fos = new FileOutputStream(new File(layeredFSRootPath + "main"));
+            fos.write(main);
+            fos.close();
+        }
+
+        for (Map.Entry<String, byte[]> entry : changedFiles.entrySet()) {
+            byte[] file = entry.getValue();
+            writeRomfsFileToLayeredFS(file, romfsRootPath);
+        }
+    }
+
+    private void purgeDirectory(File directory) {
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                purgeDirectory(file);
+            }
+            file.delete();
+        }
+    }
+
+    private void writeRomfsFileToLayeredFS(String path, byte[] file, String layeredFSRootPath) throws IOException {
+        String[] romfsPathComponents = path.split("/");
+        StringBuffer buffer = new StringBuffer(layeredFSRootPath);
+        for (int i = 0; i < romfsPathComponents.length - 1; i++) {
+            buffer.append(romfsPathComponents[i]);
+            buffer.append(File.separator);
+            File currentDir = new File(buffer.toString());
+            if (!currentDir.exists()) {
+                currentDir.mkdirs();
+            }
+        }
+        buffer.append(romfsPathComponents[romfsPathComponents.length - 1]);
+        String romfsFilePath = buffer.toString();
+        FileOutputStream fos = new FileOutputStream(new File(romfsFilePath));
+        fos.write(file);
+        fos.close();
     }
 
     protected abstract boolean isGameUpdateSupported(int version);
@@ -122,9 +183,13 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
     protected byte[] readMain() throws IOException {
         String mainPath = loadedFN + File.separator + "exefs" + File.separator + "main";
         RandomAccessFile mainFile = new RandomAccessFile(mainPath, "r");
-        byte[] main = new byte[(int)mainFile.length()];
+        main = new byte[(int)mainFile.length()];
         mainFile.readFully(main);
         return main;
+    }
+
+    protected void writeMain(byte[] data) throws IOException {
+        main = data;
     }
 
     protected byte[] readFile(String location) throws IOException {
@@ -133,5 +198,18 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
         byte[] file = new byte[(int)randomAccessFile.length()];
         randomAccessFile.readFully(file);
         return file;
+    }
+
+    protected void writeFile(String location, byte[] data, int offset, int length) throws IOException {
+        if (offset != 0 || length != data.length) {
+            byte[] newData = new byte[length];
+            System.arraycopy(data, offset, newData, 0, length);
+            data = newData;
+        }
+        changedFiles.put(location, data);
+    }
+
+    protected void writeFile(String location, byte[] data) throws IOException {
+        writeFile(location, data, 0, data.length);
     }
 }
