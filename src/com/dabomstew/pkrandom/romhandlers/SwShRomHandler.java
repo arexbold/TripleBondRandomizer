@@ -89,7 +89,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public Pokemon getAltFormeOfPokemon(Pokemon pk, int forme) {
-        return null;
+        int pokeNum = absolutePokeNumByBaseForme.getOrDefault(pk.number,dummyAbsolutePokeNums).getOrDefault(forme,0);
+        return pokeNum != 0 ? !pokes.get(pokeNum).actuallyCosmetic ? pokes.get(pokeNum) : pokes.get(pokeNum).baseForme : pk;
     }
 
     @Override
@@ -270,21 +271,57 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
-    private class AreaData {
-        public int fileNumber;
-        public boolean hasTables;
-        public List<byte[]> encounterTables;
-        //public List<ZoneData> zones;
-        public String name;
-
-        public AreaData() {
-            encounterTables = new ArrayList<>();
-        }
-    }
-
     @Override
-    public void setEncounters(boolean useTimeOfDay, List<EncounterSet> encounters) {
+    public void setEncounters(boolean useTimeOfDay, List<EncounterSet> encountersList) {
+        Iterator<EncounterSet> encounters = encountersList.iterator();
 
+        try  {
+            final int NUM_WEATHER_TABLES = 9;
+            // TODO move file name to offsets.ini file
+            byte[] wildData = this.readFile("bin/archive/field/resident/data_table.gfpak");
+            GFPack wildPack = new GFPack(wildData);
+
+            // TODO read from encount_k for sword
+            byte[] shieldData = wildPack.getDataFileName("encount_t.bin");
+
+            SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(shieldData));
+            for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
+                SwShWildEncounterTable table = wildArchive.encounterTables(i);
+                if (table.subTablesLength() > 0) {
+                    boolean distinctWeatherTables = true;
+                    if (isAllWeatherTablesIdentical(table, NUM_WEATHER_TABLES)) {
+                        distinctWeatherTables = false;
+                    }
+                    EncounterSet es = encounters.next();
+                    for (int j = 0; j < table.subTablesLength(); j++) {
+
+                        if (j >= NUM_WEATHER_TABLES || (j > 0 && distinctWeatherTables)) {
+                            es = encounters.next();
+                        }
+                        SwShWildEncounterSubTable subTable = table.subTables(j);
+                        for (int k = 0; k < subTable.slotsLength(); k++) {
+                            SwShWildEncounterSlot slot = subTable.slots(k);
+                            if (slot.species() == 0) {
+                                continue;
+                            }
+                            Encounter e = es.encounters.get(k);
+                            slot.mutateSpecies(e.pokemon.getBaseNumber());
+                            slot.mutateForm(e.formeNumber);
+                            if (k == 0) {
+                                subTable.mutateLevelMin(e.level);
+                                subTable.mutateLevelMax(e.maxLevel);
+                            }
+                        }
+                    }
+                }
+            }
+            byte[] newShieldData = wildArchive.getByteBuffer().array();
+            wildPack.setDataFileName("encount_t.bin",newShieldData);
+            byte[] newWildData = wildPack.writePack();
+            writeFile("bin/archive/field/resident/data_table.gfpak",newWildData);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
@@ -659,7 +696,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public int generationOfPokemon() {
-        return 0;
+        return 8;
     }
 
     @Override

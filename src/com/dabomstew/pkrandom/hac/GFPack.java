@@ -71,7 +71,7 @@ public class GFPack {
         }
     }
 
-    private byte[] writePack() {
+    public byte[] writePack() {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         writeTableHeaderList(baos);
         for (int i = 0; i < decompressedFiles.length; i++) {
@@ -179,6 +179,11 @@ public class GFPack {
     public byte[] getDataFileName(String name) {
         int index = getIndexFileName(name);
         return decompressedFiles[index];
+    }
+
+    public void setDataFileName(String name, byte[] data) {
+        int index = getIndexFileName(name);
+        decompressedFiles[index] = data;
     }
 
     private int getIndexFileName(String name) {

@@ -113,8 +113,9 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
         }
 
         for (Map.Entry<String, byte[]> entry : changedFiles.entrySet()) {
+            String path = entry.getKey();
             byte[] file = entry.getValue();
-            writeRomfsFileToLayeredFS(file, romfsRootPath);
+            writeRomfsFileToLayeredFS(path, file, romfsRootPath);
         }
     }
 

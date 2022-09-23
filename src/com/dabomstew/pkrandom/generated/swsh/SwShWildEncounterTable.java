@@ -7,6 +7,7 @@ import java.lang.*;
 import java.util.*;
 import com.google.flatbuffers.*;
 
+@javax.annotation.Generated(value="flatc")
 @SuppressWarnings("unused")
 public final class SwShWildEncounterTable extends Table {
   public static void ValidateVersion() { Constants.FLATBUFFERS_2_0_0(); }
@@ -16,6 +17,7 @@ public final class SwShWildEncounterTable extends Table {
   public SwShWildEncounterTable __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public long zoneId() { int o = __offset(4); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
+  public boolean mutateZoneId(long zone_id) { int o = __offset(4); if (o != 0) { bb.putLong(o + bb_pos, zone_id); return true; } else { return false; } }
   public com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSubTable subTables(int j) { return subTables(new com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSubTable(), j); }
   public com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSubTable subTables(com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSubTable obj, int j) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
   public int subTablesLength() { int o = __offset(6); return o != 0 ? __vector_len(o) : 0; }

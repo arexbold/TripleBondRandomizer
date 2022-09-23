@@ -7,6 +7,7 @@ import java.lang.*;
 import java.util.*;
 import com.google.flatbuffers.*;
 
+@javax.annotation.Generated(value="flatc")
 @SuppressWarnings("unused")
 public final class SwShWildEncounterArchive extends Table {
   public static void ValidateVersion() { Constants.FLATBUFFERS_2_0_0(); }
@@ -16,6 +17,7 @@ public final class SwShWildEncounterArchive extends Table {
   public SwShWildEncounterArchive __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public long field00() { int o = __offset(4); return o != 0 ? (long)bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L; }
+  public boolean mutateField00(long field_00) { int o = __offset(4); if (o != 0) { bb.putInt(o + bb_pos, (int)field_00); return true; } else { return false; } }
   public com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterTable encounterTables(int j) { return encounterTables(new com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterTable(), j); }
   public com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterTable encounterTables(com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterTable obj, int j) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
   public int encounterTablesLength() { int o = __offset(6); return o != 0 ? __vector_len(o) : 0; }

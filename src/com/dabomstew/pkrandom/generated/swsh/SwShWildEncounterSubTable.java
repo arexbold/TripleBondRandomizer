@@ -7,6 +7,7 @@ import java.lang.*;
 import java.util.*;
 import com.google.flatbuffers.*;
 
+@javax.annotation.Generated(value="flatc")
 @SuppressWarnings("unused")
 public final class SwShWildEncounterSubTable extends Table {
   public static void ValidateVersion() { Constants.FLATBUFFERS_2_0_0(); }
@@ -16,7 +17,9 @@ public final class SwShWildEncounterSubTable extends Table {
   public SwShWildEncounterSubTable __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public int levelMin() { int o = __offset(4); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateLevelMin(int level_min) { int o = __offset(4); if (o != 0) { bb.put(o + bb_pos, (byte)level_min); return true; } else { return false; } }
   public int levelMax() { int o = __offset(6); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateLevelMax(int level_max) { int o = __offset(6); if (o != 0) { bb.put(o + bb_pos, (byte)level_max); return true; } else { return false; } }
   public com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSlot slots(int j) { return slots(new com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSlot(), j); }
   public com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSlot slots(com.dabomstew.pkrandom.generated.swsh.SwShWildEncounterSlot obj, int j) { int o = __offset(8); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
   public int slotsLength() { int o = __offset(8); return o != 0 ? __vector_len(o) : 0; }

@@ -7,6 +7,7 @@ import java.lang.*;
 import java.util.*;
 import com.google.flatbuffers.*;
 
+@javax.annotation.Generated(value="flatc")
 @SuppressWarnings("unused")
 public final class SwShWildEncounterSlot extends Table {
   public static void ValidateVersion() { Constants.FLATBUFFERS_2_0_0(); }
@@ -16,8 +17,11 @@ public final class SwShWildEncounterSlot extends Table {
   public SwShWildEncounterSlot __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public int probability() { int o = __offset(4); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateProbability(int probability) { int o = __offset(4); if (o != 0) { bb.put(o + bb_pos, (byte)probability); return true; } else { return false; } }
   public int species() { int o = __offset(6); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateSpecies(int species) { int o = __offset(6); if (o != 0) { bb.putInt(o + bb_pos, species); return true; } else { return false; } }
   public int form() { int o = __offset(8); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateForm(int form) { int o = __offset(8); if (o != 0) { bb.put(o + bb_pos, (byte)form); return true; } else { return false; } }
 
   public static int createSwShWildEncounterSlot(FlatBufferBuilder builder,
       int probability,

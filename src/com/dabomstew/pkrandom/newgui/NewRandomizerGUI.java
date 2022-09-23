@@ -1262,6 +1262,9 @@ public class NewRandomizerGUI {
     }
 
     private SaveType askForSaveType() {
+        if (romHandler.generationOfPokemon() >= 8) {
+            return SaveType.DIRECTORY;
+        }
         SaveType saveType = SaveType.FILE;
         if (romHandler.hasGameUpdateLoaded()) {
             String text = bundle.getString("GUI.savingWithGameUpdate");
