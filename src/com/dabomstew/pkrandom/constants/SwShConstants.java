@@ -309,6 +309,34 @@ public class SwShConstants {
         return m;
     }
 
+    public static final Map<Integer,List<Integer>> abilityVariations = setupAbilityVariations();
+
+    private static Map<Integer,List<Integer>> setupAbilityVariations() {
+        Map<Integer,List<Integer>> map = new HashMap<>();
+        map.put(Abilities.insomnia, Arrays.asList(Abilities.insomnia, Abilities.vitalSpirit));
+        map.put(Abilities.clearBody, Arrays.asList(Abilities.clearBody, Abilities.whiteSmoke, Abilities.fullMetalBody));
+        map.put(Abilities.hugePower, Arrays.asList(Abilities.hugePower, Abilities.purePower));
+        map.put(Abilities.battleArmor, Arrays.asList(Abilities.battleArmor, Abilities.shellArmor));
+        map.put(Abilities.cloudNine, Arrays.asList(Abilities.cloudNine, Abilities.airLock));
+        map.put(Abilities.filter, Arrays.asList(Abilities.filter, Abilities.solidRock, Abilities.prismArmor));
+        map.put(Abilities.roughSkin, Arrays.asList(Abilities.roughSkin, Abilities.ironBarbs));
+        map.put(Abilities.moldBreaker, Arrays.asList(Abilities.moldBreaker, Abilities.turboblaze, Abilities.teravolt));
+        map.put(Abilities.wimpOut, Arrays.asList(Abilities.wimpOut, Abilities.emergencyExit));
+        map.put(Abilities.queenlyMajesty, Arrays.asList(Abilities.queenlyMajesty, Abilities.dazzling));
+        map.put(Abilities.gooey, Arrays.asList(Abilities.gooey, Abilities.tanglingHair));
+        map.put(Abilities.receiver, Arrays.asList(Abilities.receiver, Abilities.powerOfAlchemy));
+        map.put(Abilities.multiscale, Arrays.asList(Abilities.multiscale, Abilities.shadowShield));
+        map.put(Abilities.protean, Arrays.asList(Abilities.protean, Abilities.libero));
+        map.put(Abilities.propellerTail, Arrays.asList(Abilities.propellerTail, Abilities.stalwart));
+
+        return map;
+    }
+
+    public static final List<Integer> uselessAbilities = Arrays.asList(Abilities.forecast, Abilities.multitype,
+            Abilities.flowerGift, Abilities.zenMode, Abilities.stanceChange, Abilities.shieldsDown, Abilities.schooling,
+            Abilities.disguise, Abilities.battleBond, Abilities.powerConstruct, Abilities.rksSystem,
+            Abilities.gulpMissile, Abilities.iceFace, Abilities.hungerSwitch);
+
     public static String getZoneName(long hash) {
         return zoneNames.get(hash);
     }

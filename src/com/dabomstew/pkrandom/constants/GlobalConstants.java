@@ -196,19 +196,22 @@ public class GlobalConstants {
 
     public static final List<Integer> badAbilities = Arrays.asList(
             Abilities.minus, Abilities.plus, Abilities.anticipation, Abilities.forewarn, Abilities.frisk,
-            Abilities.honeyGather, Abilities.auraBreak, Abilities.receiver, Abilities.powerOfAlchemy
+            Abilities.honeyGather, Abilities.auraBreak, Abilities.receiver, Abilities.powerOfAlchemy,
+            Abilities.ballFetch
     );
 
     public static final List<Integer> doubleBattleAbilities = Arrays.asList(
             Abilities.friendGuard, Abilities.healer, Abilities.telepathy, Abilities.symbiosis,
-            Abilities.battery
+            Abilities.battery, Abilities.propellerTail, Abilities.stalwart, Abilities.powerSpot,
+            Abilities.curiousMedicine
     );
 
     public static final List<Integer> duplicateAbilities = Arrays.asList(
             Abilities.vitalSpirit, Abilities.whiteSmoke, Abilities.purePower, Abilities.shellArmor, Abilities.airLock,
             Abilities.solidRock, Abilities.ironBarbs, Abilities.turboblaze, Abilities.teravolt, Abilities.emergencyExit,
             Abilities.dazzling, Abilities.tanglingHair, Abilities.powerOfAlchemy, Abilities.fullMetalBody,
-            Abilities.shadowShield, Abilities.prismArmor, Abilities.libero, Abilities.stalwart
+            Abilities.shadowShield, Abilities.prismArmor, Abilities.libero, Abilities.stalwart, Abilities.chillingNeigh,
+            Abilities.grimNeigh
     );
 
     public static final List<Integer> noPowerNonStatusMoves = Arrays.asList(

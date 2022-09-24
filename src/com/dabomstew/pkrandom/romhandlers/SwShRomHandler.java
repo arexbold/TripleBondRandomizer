@@ -57,6 +57,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     private Map<Integer,Integer> dummyAbsolutePokeNums;
     private List<Pokemon> pokemonList;
     private List<Pokemon> pokemonListInclFormes;
+    private List<String> abilityNames;
 
     @Override
     public boolean isRomValid() {
@@ -140,17 +141,22 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public int abilitiesPerPokemon() {
-        return 0;
+        return 3;
     }
 
     @Override
     public int highestAbilityIndex() {
-        return 0;
+        return SwShConstants.highestAbilityIndex;
+    }
+
+    @Override
+    public String abilityName(int number) {
+        return abilityNames.get(number);
     }
 
     @Override
     public Map<Integer, List<Integer>> getAbilityVariations() {
-        return null;
+        return SwShConstants.abilityVariations;
     }
 
     @Override
@@ -723,6 +729,9 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     .stream()
                     .filter(p -> (p == null || p.number <= SwShConstants.pokemonCount))
                     .collect(Collectors.toList());
+
+            // TODO move file path to offsets.ini file
+            abilityNames = getStrings("bin/message/English/common/tokusei.dat");
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -864,8 +873,6 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
         int formeCount = stats[SwShConstants.bsFormeCountOffset] & 0xFF;
         if (formeCount > 1) {
-            System.out.println("Forms: " + formeCount);
-            System.out.printf("Index: %04X\n",FileFunctions.read2ByteInt(stats, SwShConstants.bsFormeOffset));
             if (!altFormes.keySet().contains(pkmn.number)) {
                 int firstFormeOffset = FileFunctions.read2ByteInt(stats, SwShConstants.bsFormeOffset);
                 if (firstFormeOffset != 0) {
