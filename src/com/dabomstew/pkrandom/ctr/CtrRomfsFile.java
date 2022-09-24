@@ -1,7 +1,7 @@
 package com.dabomstew.pkrandom.ctr;
 
 /*----------------------------------------------------------------------------*/
-/*--  RomfsFile.java - an entry in the romfs filesystem                     --*/
+/*--  RomfsFile.java - an entry in the 3DS romfs filesystem                 --*/
 /*--                                                                        --*/
 /*--  Part of "Universal Pokemon Randomizer ZX" by the UPR-ZX team          --*/
 /*--  Pokemon and any associated names and the like are                     --*/
@@ -28,7 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
-public class RomfsFile {
+public class CtrRomfsFile {
 
     private NCCH parent;
     public long offset;
@@ -40,7 +40,7 @@ public class RomfsFile {
     public boolean fileChanged = false;
     public long originalCRC;
 
-    public RomfsFile(NCCH parent) {
+    public CtrRomfsFile(NCCH parent) {
         this.parent = parent;
     }
 

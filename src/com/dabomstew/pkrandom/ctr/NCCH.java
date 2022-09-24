@@ -47,7 +47,7 @@ public class NCCH {
     private SMDH smdh;
     private List<ExefsFileHeader> extraExefsFiles;
     private List<FileMetadata> fileMetadataList;
-    private Map<String, RomfsFile> romfsFiles;
+    private Map<String, CtrRomfsFile> romfsFiles;
     private boolean romOpen;
     private String tmpFolder;
     private boolean writingEnabled;
@@ -235,7 +235,7 @@ public class NCCH {
         FileMetadata metadata = new FileMetadata(fileMetadataBlock, offset);
         String currentPath = rootPath + metadata.name;
         System.out.println("NCCH: Visiting file " + currentPath);
-        RomfsFile file = new RomfsFile(this);
+        CtrRomfsFile file = new CtrRomfsFile(this);
         file.offset = fileDataOffset + metadata.fileDataOffset;
         file.size = (int) metadata.fileDataLength;  // no Pokemon game has a file larger than unsigned int max
         file.fullPath = currentPath;
@@ -602,8 +602,8 @@ public class NCCH {
             fos.close();
         }
 
-        for (Map.Entry<String, RomfsFile> entry : romfsFiles.entrySet()) {
-            RomfsFile file = entry.getValue();
+        for (Map.Entry<String, CtrRomfsFile> entry : romfsFiles.entrySet()) {
+            CtrRomfsFile file = entry.getValue();
             if (file.fileChanged) {
                 writeRomfsFileToLayeredFS(file, romfsRootPath);
             }
@@ -619,7 +619,7 @@ public class NCCH {
         }
     }
 
-    private void writeRomfsFileToLayeredFS(RomfsFile file, String layeredFSRootPath) throws IOException {
+    private void writeRomfsFileToLayeredFS(CtrRomfsFile file, String layeredFSRootPath) throws IOException {
         String[] romfsPathComponents = file.fullPath.split("/");
         StringBuffer buffer = new StringBuffer(layeredFSRootPath);
         for (int i = 0; i < romfsPathComponents.length - 1; i++) {
@@ -775,7 +775,7 @@ public class NCCH {
 
     public Map<String, String> getRomfsFilesDiagnostics() {
         Map<String, String> fileDiagnostics = new HashMap<>();
-        for (Map.Entry<String, RomfsFile> entry : romfsFiles.entrySet()) {
+        for (Map.Entry<String, CtrRomfsFile> entry : romfsFiles.entrySet()) {
             if (entry.getValue().originalCRC != 0) {
                 fileDiagnostics.put(entry.getKey(), entry.getKey() + ": " + String.format("%08X", entry.getValue().originalCRC));
             }
@@ -984,7 +984,7 @@ public class NCCH {
         public int nextFileInHashBucketOffset;
         public int nameLength;
         public String name;
-        public RomfsFile file; // used only for rebuilding CXI
+        public CtrRomfsFile file; // used only for rebuilding CXI
 
         public FileMetadata(byte[] fileMetadataBlock, int offset) {
             this.offset = offset;
