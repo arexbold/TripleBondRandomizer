@@ -25,7 +25,7 @@ public class SwShConstants {
 
     public static final int bsSize = 0xB0;
 
-    public static final int evolutionMethodCount = 42;  // TODO this is from gen 7, update when adding evolutions
+    public static final int evolutionMethodCount = 48;
 
     public static final Type[] typeTable = constructTypeTable();
 
@@ -50,6 +50,52 @@ public class SwShConstants {
         table[0x10] = Type.DARK;
         table[0x11] = Type.FAIRY;
         return table;
+    }
+
+    public static byte typeToByte(Type type) {
+        if (type == null) {
+            return 0x00; // normal?
+        }
+        switch (type) {
+            case NORMAL:
+                return 0x00;
+            case FIGHTING:
+                return 0x01;
+            case FLYING:
+                return 0x02;
+            case POISON:
+                return 0x03;
+            case GROUND:
+                return 0x04;
+            case ROCK:
+                return 0x05;
+            case BUG:
+                return 0x06;
+            case GHOST:
+                return 0x07;
+            case FIRE:
+                return 0x09;
+            case WATER:
+                return 0x0A;
+            case GRASS:
+                return 0x0B;
+            case ELECTRIC:
+                return 0x0C;
+            case PSYCHIC:
+                return 0x0D;
+            case ICE:
+                return 0x0E;
+            case DRAGON:
+                return 0x0F;
+            case STEEL:
+                return 0x08;
+            case DARK:
+                return 0x10;
+            case FAIRY:
+                return 0x11;
+            default:
+                return 0; // normal by default
+        }
     }
 
     public static List<Integer> actuallyCosmeticForms = Arrays.asList(
@@ -105,6 +151,9 @@ public class SwShConstants {
 
     // TODO make sure that ignored forms still get base stats etc propagated from base forme
     public static List<Integer> ignoreForms = Arrays.asList(
+            Species.SwShFormes.pikachuCosmetic8,
+            Species.SwShFormes.slowbroMega,
+            Species.SwShFormes.rayquazaMega,
             Species.SwShFormes.cherrimCosmetic1,
             Species.SwShFormes.zygarde10Cosmetic1,
             Species.SwShFormes.zygardeCosmetic1,
@@ -143,10 +192,9 @@ public class SwShConstants {
     );
 
     private static List<Integer> speciesWithGalarianForms = Arrays.asList(
-            Species.ponyta, Species.rapidash, Species.slowpoke, Species.farfetchd,
-            Species.weezing, Species.mrMime, Species.articuno, Species.zapdos, Species.moltres, Species.slowking,
-            Species.corsola, Species.zigzagoon, Species.linoone, Species.darumaka, Species.darmanitan, Species.yamask,
-            Species.stunfisk
+            Species.ponyta, Species.rapidash, Species.slowpoke, Species.farfetchd, Species.weezing, Species.mrMime,
+            Species.articuno, Species.zapdos, Species.moltres, Species.slowking, Species.corsola, Species.zigzagoon,
+            Species.linoone, Species.darumaka, Species.yamask, Species.stunfisk
     );
 
 
@@ -199,8 +247,8 @@ public class SwShConstants {
 
         Map<Integer,String> darmanitanMap = new HashMap<>();
         darmanitanMap.put(1,"-Z");
-        darmanitanMap.put(1,"-G");
-        darmanitanMap.put(1,"-GZ");
+        darmanitanMap.put(2,"-G");
+        darmanitanMap.put(3,"-GZ");
         map.put(Species.darmanitan, darmanitanMap);
 
         Map<Integer,String> kyuremMap = new HashMap<>();

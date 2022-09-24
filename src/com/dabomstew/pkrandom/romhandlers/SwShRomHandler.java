@@ -52,12 +52,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     }
 
     private Map<Integer,Pokemon> pokes;
-    private Map<Integer,FormeInfo> formeMappings = new TreeMap<>();
     private Map<Integer,Map<Integer,Integer>> absolutePokeNumByBaseForme;
     private Map<Integer,Integer> dummyAbsolutePokeNums;
     private List<Pokemon> pokemonList;
     private List<Pokemon> pokemonListInclFormes;
-    private List<String> abilityNames;
+    private List<String> abilityNames, itemNames;
 
     @Override
     public boolean isRomValid() {
@@ -152,6 +151,16 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public String abilityName(int number) {
         return abilityNames.get(number);
+    }
+
+    @Override
+    public List<Integer> getUselessAbilities() {
+        return new ArrayList<>(SwShConstants.uselessAbilities);
+    }
+
+    @Override
+    public boolean altFormesCanHaveDifferentEvolutions() {
+        return true;
     }
 
     @Override
@@ -577,7 +586,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public String[] getItemNames() {
-        return new String[0];
+        return itemNames.toArray(new String[0]);
     }
 
     @Override
@@ -732,34 +741,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
             // TODO move file path to offsets.ini file
             abilityNames = getStrings("bin/message/English/common/tokusei.dat");
+            itemNames = getStrings("bin/message/English/common/itemname.dat");
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
     }
-
-    @Override
-    protected void savingROM() throws IOException {
-
-    }
-
-
-    private List<String> getStrings(String fileName) throws IOException {
-        byte[] rawFile = this.readFile(fileName);
-        // TODO handle romType better
-        return new ArrayList<>(N3DSTxtHandler.readTexts(rawFile,true,100));
-    }
-
-    private void setStrings(String fileName, List<String> strings) {
-        try {
-            byte[] oldRawFile = this.readFile(fileName);
-            // TODO handle romType better
-            byte[] newRawFile = N3DSTxtHandler.saveEntry(oldRawFile, strings, 100);
-            // TODO save file
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
     private void loadPokemonStats() {
         try {
@@ -768,6 +754,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             String[] pokeNames = readPokemonNames();
             int pokemonCount = SwShConstants.pokemonCount;
             pokes = new TreeMap<>();
+            Map<Integer,FormeInfo> formeMappings = new TreeMap<>();
             for (int i = 1; i <= pokemonCount; i++) {
                 byte[] thisEntry = new byte[SwShConstants.bsSize];
                 System.arraycopy(personalInfo, i * SwShConstants.bsSize, thisEntry, 0, SwShConstants.bsSize);
@@ -780,7 +767,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 thisPokemon.name = pokeNames[i];
                 pokes.put(i,thisPokemon);
             }
-//
+
             absolutePokeNumByBaseForme = new HashMap<>();
             dummyAbsolutePokeNums = new HashMap<>();
             dummyAbsolutePokeNums.put(255,0);
@@ -808,14 +795,18 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     thisPokemon.formeSuffix = SwShConstants.getFormeSuffixByBaseForme(fi.baseForme,fi.formeNumber);
                 }
                 if (realBaseForme == prevSpecies) {
-                    formNum++;
+                    if (SwShConstants.altFormesWithCosmeticForms.containsKey(thisPokemon.baseForme.number)) {
+                        formNum++;      // Special case for Power Construct Zygarde-10
+                    } else {
+                        formNum = fi.formeNumber;
+                    }
                     currentMap.put(formNum,k);
                 } else {
                     if (prevSpecies != 0) {
                         absolutePokeNumByBaseForme.put(prevSpecies,currentMap);
                     }
                     prevSpecies = realBaseForme;
-                    formNum = 1;
+                    formNum = fi.formeNumber;
                     currentMap = new HashMap<>();
                     currentMap.put(formNum,k);
                 }
@@ -827,7 +818,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
-        //populateEvolutions();
+        populateEvolutions();
     }
 
     private void loadBasicPokeStats(Pokemon pkmn, byte[] stats, Map<Integer,FormeInfo> altFormes) {
@@ -925,6 +916,240 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
         return pokeNames;
     }
+
+    private void populateEvolutions() {
+        for (Pokemon pkmn : pokes.values()) {
+            if (pkmn != null) {
+                pkmn.evolutionsFrom.clear();
+                pkmn.evolutionsTo.clear();
+            }
+        }
+
+        // Read files
+        try {
+            for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
+                Pokemon pk = pokeEntry.getValue();
+                byte[] evoEntry = readFile(String.format("bin/pml/evolution/evo_%03d.bin",pokeEntry.getKey()));
+                boolean skipNext = false;
+                for (int evo = 0; evo < 9; evo++) {
+                    int method = evoEntry[evo * 8];
+                    int species = FileFunctions.read2ByteInt(evoEntry, evo * 8 + 4);
+                    if (method >= 1 && method <= SwShConstants.evolutionMethodCount && species >= 1) {
+                        EvolutionType et = EvolutionType.fromIndex(8, method);
+                        if (et.skipSplitEvo()) continue; // Remove Feebas "split" evolution
+                        if (skipNext) {
+                            skipNext = false;
+                            continue;
+                        }
+                        if (et == EvolutionType.LEVEL_GAME) {
+                            skipNext = true;
+                        }
+
+                        int extraInfo = FileFunctions.read2ByteInt(evoEntry, evo * 8 + 2);
+                        int forme = evoEntry[evo * 8 + 6];
+                        int level = evoEntry[evo * 8 + 7];
+                        Evolution evol = new Evolution(pk, getPokemonForEncounter(species,forme), true, et, extraInfo);
+                        evol.forme = forme;
+                        evol.level = level;
+                        if (et.usesLevel()) {
+                            evol.extraInfo = level;
+                        }
+                        switch (et) {
+                            case LEVEL_GAME:
+                                evol.type = EvolutionType.LEVEL;
+                                // TODO add this after offsets.ini file exists
+                                //evol.to = pokes[romEntry.getInt("CosmoemEvolutionNumber")];
+                                break;
+                            case LEVEL_DAY_GAME:
+                                evol.type = EvolutionType.LEVEL_DAY;
+                                break;
+                            case LEVEL_NIGHT_GAME:
+                                evol.type = EvolutionType.LEVEL_NIGHT;
+                                break;
+                            default:
+                                break;
+                        }
+                        if (pk.baseForme != null && pk.baseForme.number == Species.rockruff && pk.formeNumber > 0) {
+                            evol.from = pk.baseForme;
+                            pk.baseForme.evolutionsFrom.add(evol);
+                            pokes.get(absolutePokeNumByBaseForme.get(species).get(evol.forme)).evolutionsTo.add(evol);
+                        }
+                        if (!pk.evolutionsFrom.contains(evol)) {
+                            pk.evolutionsFrom.add(evol);
+                            if (!pk.actuallyCosmetic) {
+                                if (evol.forme > 0) {
+                                    // The forme number for the evolution might represent an actual alt forme, or it
+                                    // might simply represent a cosmetic forme. If it represents an actual alt forme,
+                                    // we'll need to figure out what the absolute species ID for that alt forme is
+                                    // and update its evolutions. If it instead represents a cosmetic forme, then the
+                                    // absolutePokeNumByBaseFormeMap will be null, since there's no secondary species
+                                    // entry for this forme.
+                                    Map<Integer, Integer> absolutePokeNumByBaseFormeMap = absolutePokeNumByBaseForme.get(species);
+                                    if (absolutePokeNumByBaseFormeMap != null) {
+                                        species = absolutePokeNumByBaseFormeMap.get(evol.forme);
+                                    }
+                                }
+                                pokes.get(species).evolutionsTo.add(evol);
+                            }
+                        }
+                    }
+                }
+
+                // Nincada's Shedinja evo is hardcoded into the game's executable,
+                // so if the Pokemon is Nincada, then let's and put it as one of its evolutions
+                if (pk.number == Species.nincada) {
+                    Pokemon shedinja = pokes.get(Species.shedinja);
+                    Evolution evol = new Evolution(pk, shedinja, false, EvolutionType.LEVEL_IS_EXTRA, 20);
+                    evol.forme = -1;
+                    evol.level = 20;
+                    pk.evolutionsFrom.add(evol);
+                    shedinja.evolutionsTo.add(evol);
+                }
+
+                // Split evos shouldn't carry stats unless the evo is Nincada's
+                // In that case, we should have Ninjask carry stats
+                if (pk.evolutionsFrom.size() > 1) {
+                    for (Evolution e : pk.evolutionsFrom) {
+                        if (e.type != EvolutionType.LEVEL_CREATE_EXTRA) {
+                            e.carryStats = false;
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
+    @Override
+    protected void savingROM() throws IOException {
+        savePokemonStats();
+    }
+
+    private void savePokemonStats() {
+
+        try {
+            byte[] personalInfo = this.readFile("bin/pml/personal/personal_total.bin");
+            for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
+                byte[] pokeData = new byte[SwShConstants.bsSize];
+                int i = pokeEntry.getKey();
+                System.arraycopy(personalInfo, i * SwShConstants.bsSize, pokeData, 0, SwShConstants.bsSize);
+                saveBasicPokeStats(pokeEntry.getValue(), pokeData);
+                System.arraycopy(pokeData, 0, personalInfo, i * SwShConstants.bsSize, SwShConstants.bsSize);
+            }
+            writeFile("bin/pml/personal/personal_total.bin", personalInfo);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+
+        writeEvolutions();
+    }
+
+    private void saveBasicPokeStats(Pokemon pkmn, byte[] stats) {
+        stats[SwShConstants.bsHPOffset] = (byte) pkmn.hp;
+        stats[SwShConstants.bsAttackOffset] = (byte) pkmn.attack;
+        stats[SwShConstants.bsDefenseOffset] = (byte) pkmn.defense;
+        stats[SwShConstants.bsSpeedOffset] = (byte) pkmn.speed;
+        stats[SwShConstants.bsSpAtkOffset] = (byte) pkmn.spatk;
+        stats[SwShConstants.bsSpDefOffset] = (byte) pkmn.spdef;
+        stats[SwShConstants.bsPrimaryTypeOffset] = SwShConstants.typeToByte(pkmn.primaryType);
+        if (pkmn.secondaryType == null) {
+            stats[SwShConstants.bsSecondaryTypeOffset] = stats[SwShConstants.bsPrimaryTypeOffset];
+        } else {
+            stats[SwShConstants.bsSecondaryTypeOffset] = SwShConstants.typeToByte(pkmn.secondaryType);
+        }
+        stats[SwShConstants.bsCatchRateOffset] = (byte) pkmn.catchRate;
+        stats[SwShConstants.bsGrowthCurveOffset] = pkmn.growthCurve.toByte();
+
+        stats[SwShConstants.bsAbility1Offset] = (byte) pkmn.ability1;
+        stats[SwShConstants.bsAbility2Offset] = pkmn.ability2 != 0 ? (byte) pkmn.ability2 : (byte) pkmn.ability1;
+        stats[SwShConstants.bsAbility3Offset] = (byte) pkmn.ability3;
+
+        // Held items
+        if (pkmn.guaranteedHeldItem > 0) {
+            FileFunctions.write2ByteInt(stats, SwShConstants.bsCommonHeldItemOffset, pkmn.guaranteedHeldItem);
+            FileFunctions.write2ByteInt(stats, SwShConstants.bsRareHeldItemOffset, pkmn.guaranteedHeldItem);
+            FileFunctions.write2ByteInt(stats, SwShConstants.bsVeryRareHeldItemOffset, 0);
+        } else {
+            FileFunctions.write2ByteInt(stats, SwShConstants.bsCommonHeldItemOffset, pkmn.commonHeldItem);
+            FileFunctions.write2ByteInt(stats, SwShConstants.bsRareHeldItemOffset, pkmn.rareHeldItem);
+            FileFunctions.write2ByteInt(stats, SwShConstants.bsVeryRareHeldItemOffset, 0);
+        }
+
+        if (pkmn.fullName().equals("Meowstic")) {
+            stats[SwShConstants.bsGenderOffset] = 0;
+        } else if (pkmn.fullName().equals("Meowstic-F")) {
+            stats[SwShConstants.bsGenderOffset] = (byte)0xFE;
+        }
+    }
+
+    private void writeEvolutions() {
+        try {
+            for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
+                Pokemon pk = pokeEntry.getValue();
+                // TODO read file path from offsets.ini file
+                byte[] evoEntry = readFile(String.format("bin/pml/evolution/evo_%03d.bin",pokeEntry.getKey()));
+                // TODO shedinja bullshit
+//                if (pk.number == Species.nincada) {
+//                    writeShedinjaEvolution();
+//                }
+                int evosWritten = 0;
+                for (Evolution evo : pk.evolutionsFrom) {
+                    Pokemon toPK = evo.to;
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8, evo.type.toIndex(8));
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 2, evo.type.usesLevel() ? 0 : evo.extraInfo);
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 4, toPK.getBaseNumber());
+                    evoEntry[evosWritten * 8 + 6] = (byte)evo.forme;
+                    evoEntry[evosWritten * 8 + 7] = evo.type.usesLevel() ? (byte)evo.extraInfo : (byte)evo.level;
+                    evosWritten++;
+                    // Milcery needs 9 identical evolutions
+                    if (pk.number == Species.milcery) {
+                        while (evosWritten < 9) {
+                            FileFunctions.write2ByteInt(evoEntry, evosWritten * 8, evo.type.toIndex(8));
+                            FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 2, evo.type.usesLevel() ? 0 : evo.extraInfo);
+                            FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 4, toPK.getBaseNumber());
+                            evoEntry[evosWritten * 8 + 6] = (byte)evo.forme;
+                            evoEntry[evosWritten * 8 + 7] = evo.type.usesLevel() ? (byte)evo.extraInfo : (byte)evo.level;
+                            evosWritten++;
+                        }
+                    }
+                    if (evosWritten == 9) {
+                        break;
+                    }
+                }
+                while (evosWritten < 9) {
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8, 0);
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 2, 0);
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 4, 0);
+                    FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 6, 0);
+                    evosWritten++;
+                }
+                writeFile(String.format("bin/pml/evolution/evo_%03d.bin",pokeEntry.getKey()),evoEntry);
+            }
+
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
+
+    private List<String> getStrings(String fileName) throws IOException {
+        byte[] rawFile = this.readFile(fileName);
+        // TODO handle romType better
+        return new ArrayList<>(N3DSTxtHandler.readTexts(rawFile,true,100));
+    }
+
+    private void setStrings(String fileName, List<String> strings) {
+        try {
+            byte[] oldRawFile = this.readFile(fileName);
+            // TODO handle romType better
+            byte[] newRawFile = N3DSTxtHandler.saveEntry(oldRawFile, strings, 100);
+            // TODO save file
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Override
     protected String getGameAcronym() {
         return null;

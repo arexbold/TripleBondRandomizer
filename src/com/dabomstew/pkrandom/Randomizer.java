@@ -936,13 +936,18 @@ public class Randomizer {
             int i = 0;
             for (Pokemon pkmn : allPokes) {
                 if (pkmn != null && !pkmn.actuallyCosmetic) {
-                    i++;
+                    if (pkmn.formeNumber != 0) {
+                        i++;
+                    } else {
+                        i = pkmn.number;
+                    }
                     String typeString = pkmn.primaryType == null ? "???" : pkmn.primaryType.toString();
                     if (pkmn.secondaryType != null) {
                         typeString += "/" + pkmn.secondaryType.toString();
                     }
-                    log.printf("%3d|" + nameSpFormat + "|%-17s|%4d|%4d|%4d|%4d|%4d|%4d", i, pkmn.fullName(), typeString,
-                            pkmn.hp, pkmn.attack, pkmn.defense, pkmn.spatk, pkmn.spdef, pkmn.speed);
+                    int num = pkmn.formeNumber == 0 ? pkmn.number : i;
+                    log.printf("%3d|" + nameSpFormat + "|%-17s|%4d|%4d|%4d|%4d|%4d|%4d", num, pkmn.fullName(),
+                            typeString, pkmn.hp, pkmn.attack, pkmn.defense, pkmn.spatk, pkmn.spdef, pkmn.speed);
                     if (abils > 0) {
                         log.printf("|" + abSpFormat + "|" + abSpFormat, romHandler.abilityName(pkmn.ability1),
                                 pkmn.ability1 == pkmn.ability2 ? "--" : romHandler.abilityName(pkmn.ability2));

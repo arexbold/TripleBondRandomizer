@@ -27,52 +27,58 @@ package com.dabomstew.pkrandom.pokemon;
 
 public enum EvolutionType {
     /* @formatter:off */
-    LEVEL(1, 1, 4, 4, 4, 4, 4),
-    STONE(2, 2, 7, 7, 8, 8, 8),
-    TRADE(3, 3, 5, 5, 5, 5, 5),
-    TRADE_ITEM(-1, 3, 6, 6, 6, 6, 6),
-    HAPPINESS(-1, 4, 1, 1, 1, 1, 1),
-    HAPPINESS_DAY(-1, 4, 2, 2, 2, 2, 2),
-    HAPPINESS_NIGHT(-1, 4, 3, 3, 3, 3, 3),
-    LEVEL_ATTACK_HIGHER(-1, 5, 8, 8, 9, 9, 9),
-    LEVEL_DEFENSE_HIGHER(-1, 5, 10, 10, 11, 11, 11),
-    LEVEL_ATK_DEF_SAME(-1, 5, 9, 9, 10, 10, 10),
-    LEVEL_LOW_PV(-1, -1, 11, 11, 12, 12, 12),
-    LEVEL_HIGH_PV(-1, -1, 12, 12, 13, 13, 13),
-    LEVEL_CREATE_EXTRA(-1, -1, 13, 13, 14, 14, 14),
-    LEVEL_IS_EXTRA(-1, -1, 14, 14, 15, 15, 15),
-    LEVEL_HIGH_BEAUTY(-1, -1, 15, 15, 16, 16, 16),
-    STONE_MALE_ONLY(-1, -1, -1, 16, 17, 17, 17),
-    STONE_FEMALE_ONLY(-1, -1, -1, 17, 18, 18, 18),
-    LEVEL_ITEM_DAY(-1, -1, -1, 18, 19, 19, 19),
-    LEVEL_ITEM_NIGHT(-1, -1, -1, 19, 20, 20, 20),
-    LEVEL_WITH_MOVE(-1, -1, -1, 20, 21, 21, 21),
-    LEVEL_WITH_OTHER(-1, -1, -1, 21, 22, 22, 22),
-    LEVEL_MALE_ONLY(-1, -1, -1, 22, 23, 23, 23),
-    LEVEL_FEMALE_ONLY(-1, -1, -1, 23, 24, 24, 24),
-    LEVEL_ELECTRIFIED_AREA(-1, -1, -1, 24, 25, 25, 25),
-    LEVEL_MOSS_ROCK(-1, -1, -1, 25, 26, 26, 26),
-    LEVEL_ICY_ROCK(-1, -1, -1, 26, 27, 27, 27),
-    TRADE_SPECIAL(-1, -1, -1, -1, 7, 7, 7),
-    FAIRY_AFFECTION(-1, -1, -1, -1, -1, 29, 29),
-    LEVEL_WITH_DARK(-1, -1, -1, -1, -1, 30, 30),
-    LEVEL_UPSIDE_DOWN(-1, -1, -1, -1, -1, 28, 28),
-    LEVEL_RAIN(-1, -1, -1, -1, -1, 31, 31),
-    LEVEL_DAY(-1, -1, -1, -1, -1, 32, 32),
-    LEVEL_NIGHT(-1, -1, -1, -1, -1, 33, 33),
-    LEVEL_FEMALE_ESPURR(-1, -1, -1, -1, -1, 34, 34),
-    LEVEL_GAME(-1, -1, -1, -1, -1, -1, 36),
-    LEVEL_DAY_GAME(-1, -1, -1, -1, -1, -1, 37),
-    LEVEL_NIGHT_GAME(-1, -1, -1, -1, -1, -1, 38),
-    LEVEL_SNOWY(-1, -1, -1, -1, -1, -1, 39),
-    LEVEL_DUSK(-1, -1, -1, -1, -1, -1, 40),
-    LEVEL_NIGHT_ULTRA(-1, -1, -1, -1, -1, -1, 41),
-    STONE_ULTRA(-1, -1, -1, -1, -1, -1, 42),
-    NONE(-1, -1, -1, -1, -1, -1, -1);
+    LEVEL(1, 1, 4, 4, 4, 4, 4, 4),
+    STONE(2, 2, 7, 7, 8, 8, 8, 8),
+    TRADE(3, 3, 5, 5, 5, 5, 5, 5),
+    TRADE_ITEM(-1, 3, 6, 6, 6, 6, 6, 6),
+    HAPPINESS(-1, 4, 1, 1, 1, 1, 1, 1),
+    HAPPINESS_DAY(-1, 4, 2, 2, 2, 2, 2, 2),
+    HAPPINESS_NIGHT(-1, 4, 3, 3, 3, 3, 3, 3),
+    LEVEL_ATTACK_HIGHER(-1, 5, 8, 8, 9, 9, 9, 9),
+    LEVEL_DEFENSE_HIGHER(-1, 5, 10, 10, 11, 11, 11, 11),
+    LEVEL_ATK_DEF_SAME(-1, 5, 9, 9, 10, 10, 10, 10),
+    LEVEL_LOW_PV(-1, -1, 11, 11, 12, 12, 12, 12),
+    LEVEL_HIGH_PV(-1, -1, 12, 12, 13, 13, 13, 13),
+    LEVEL_CREATE_EXTRA(-1, -1, 13, 13, 14, 14, 14, 14),
+    LEVEL_IS_EXTRA(-1, -1, 14, 14, 15, 15, 15, 15),
+    LEVEL_HIGH_BEAUTY(-1, -1, 15, 15, 16, 16, 16, 16),
+    STONE_MALE_ONLY(-1, -1, -1, 16, 17, 17, 17, 17),
+    STONE_FEMALE_ONLY(-1, -1, -1, 17, 18, 18, 18, 18),
+    LEVEL_ITEM_DAY(-1, -1, -1, 18, 19, 19, 19, 19),
+    LEVEL_ITEM_NIGHT(-1, -1, -1, 19, 20, 20, 20, 20),
+    LEVEL_WITH_MOVE(-1, -1, -1, 20, 21, 21, 21, 21),
+    LEVEL_WITH_OTHER(-1, -1, -1, 21, 22, 22, 22, 22),
+    LEVEL_MALE_ONLY(-1, -1, -1, 22, 23, 23, 23, 23),
+    LEVEL_FEMALE_ONLY(-1, -1, -1, 23, 24, 24, 24, 24),
+    LEVEL_ELECTRIFIED_AREA(-1, -1, -1, 24, 25, 25, 25, 25),
+    LEVEL_MOSS_ROCK(-1, -1, -1, 25, 26, 26, 26, 26),
+    LEVEL_ICY_ROCK(-1, -1, -1, 26, 27, 27, 27, 27),
+    TRADE_SPECIAL(-1, -1, -1, -1, 7, 7, 7, 7),
+    FAIRY_AFFECTION(-1, -1, -1, -1, -1, 29, 29, 29),
+    LEVEL_WITH_DARK(-1, -1, -1, -1, -1, 30, 30, 30),
+    LEVEL_UPSIDE_DOWN(-1, -1, -1, -1, -1, 28, 28, 28),
+    LEVEL_RAIN(-1, -1, -1, -1, -1, 31, 31, 31),
+    LEVEL_DAY(-1, -1, -1, -1, -1, 32, 32, 32),
+    LEVEL_NIGHT(-1, -1, -1, -1, -1, 33, 33, 33),
+    LEVEL_FEMALE_ESPURR(-1, -1, -1, -1, -1, 34, 34, 34),
+    LEVEL_GAME(-1, -1, -1, -1, -1, -1, 36, 36),
+    LEVEL_DAY_GAME(-1, -1, -1, -1, -1, -1, 37, 37),
+    LEVEL_NIGHT_GAME(-1, -1, -1, -1, -1, -1, 38, 38),
+    LEVEL_SNOWY(-1, -1, -1, -1, -1, -1, 39, 39),
+    LEVEL_DUSK(-1, -1, -1, -1, -1, -1, 40, 40),
+    LEVEL_NIGHT_ULTRA(-1, -1, -1, -1, -1, -1, 41, 41),
+    STONE_ULTRA(-1, -1, -1, -1, -1, -1, 42, 42),
+    CRIT_THREE_TIMES(-1, -1, -1, -1, -1, -1, -1, 43),
+    GET_HURT_AND_WALK_THROUGH_A_GATE(-1, -1, -1, -1, -1, -1, -1, 44),
+    SPIN(-1, -1, -1, -1, -1, -1, -1, 45),
+    LEVEL_HIGH_KEY(-1, -1, -1, -1, -1, -1, -1, 46),
+    LEVEL_LOW_KEY(-1, -1, -1, -1, -1, -1, -1, 47),
+    TOWER(-1, -1, -1, -1, -1, -1, -1, 48),
+    NONE(-1, -1, -1, -1, -1, -1, -1, -1);
     /* @formatter:on */
 
     private int[] indexNumbers;
-    private static EvolutionType[][] reverseIndexes = new EvolutionType[7][50];
+    private static EvolutionType[][] reverseIndexes = new EvolutionType[8][50];
 
     static {
         for (EvolutionType et : EvolutionType.values()) {
@@ -103,10 +109,12 @@ public enum EvolutionType {
                 || (this == LEVEL_FEMALE_ONLY) || (this == LEVEL_WITH_DARK)|| (this == LEVEL_UPSIDE_DOWN)
                 || (this == LEVEL_RAIN) || (this == LEVEL_DAY)|| (this == LEVEL_NIGHT)|| (this == LEVEL_FEMALE_ESPURR)
                 || (this == LEVEL_GAME) || (this == LEVEL_DAY_GAME) || (this == LEVEL_NIGHT_GAME)
-                || (this == LEVEL_SNOWY) || (this == LEVEL_DUSK) || (this == LEVEL_NIGHT_ULTRA);
+                || (this == LEVEL_SNOWY) || (this == LEVEL_DUSK) || (this == LEVEL_NIGHT_ULTRA
+                || (this == LEVEL_HIGH_KEY) || (this == LEVEL_LOW_KEY));
     }
 
     public boolean skipSplitEvo() {
-        return (this == LEVEL_HIGH_BEAUTY) || (this == LEVEL_NIGHT_ULTRA) || (this == STONE_ULTRA);
+        return (this == LEVEL_HIGH_BEAUTY) || (this == LEVEL_NIGHT_ULTRA) || (this == STONE_ULTRA) ||
+                (this == LEVEL_HIGH_KEY) || (this == LEVEL_LOW_KEY);
     }
 }
