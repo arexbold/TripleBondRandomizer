@@ -23,6 +23,8 @@ package com.dabomstew.pkrandom.hac;
 
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.SysConstants;
+import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.lz4.LZ4FastDecompressor;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,6 +40,9 @@ public class SwitchFileReader {
     private String tmpFolder;
     private boolean mainOpen, mainChanged;
     private byte[] mainRamstored;
+
+    private static final int nso_header_size = 0x101;
+
 
     public SwitchFileReader(String extractedFilesPath) {
         this.extractedFilesPath = extractedFilesPath;
@@ -72,7 +77,95 @@ public class SwitchFileReader {
         return writingEnabled;
     }
 
-    // Retrieves main (the game's executable). There is no decompression yet.
+    public boolean isMainCompressed(byte[] main) throws IOException {
+        int flags = FileFunctions.readFullInt(main, 0xC);
+        boolean textCompress = (flags & 1) != 0;
+        boolean roCompress = (flags & 2) != 0;
+        boolean dataCompress = (flags & 4) != 0;
+        return textCompress || roCompress || dataCompress;
+    }
+
+    public byte[] decompressMain(byte[] compressed) {
+        // Read offsets and sizes from uncompressed header
+        int textOffset = FileFunctions.readFullInt(compressed, 0x10);
+        int textCompressedSize = FileFunctions.readFullInt(compressed, 0x60);
+        int textDecompressedSize = FileFunctions.readFullInt(compressed, 0x18);
+        int roOffset = FileFunctions.readFullInt(compressed, 0x20);
+        int roCompressedSize = FileFunctions.readFullInt(compressed, 0x64);
+        int roDecompressedSize = FileFunctions.readFullInt(compressed, 0x28);
+        int dataOffset = FileFunctions.readFullInt(compressed, 0x30);
+        int dataCompressedSize = FileFunctions.readFullInt(compressed, 0x68);
+        int dataDecompressedSize = FileFunctions.readFullInt(compressed, 0x38);
+        LZ4FastDecompressor decompressor = LZ4Factory.fastestInstance().fastDecompressor();
+
+        // Check to see which sections need decompressing
+        int flags = FileFunctions.readFullInt(compressed, 0xC);
+        boolean textCompress = (flags & 1) != 0;
+        boolean roCompress = (flags & 2) != 0;
+        boolean dataCompress = (flags & 4) != 0;
+
+        // Decompress the .text, .rodata, and .data sections if needed
+        byte[] text;
+        byte[] compressedText = new byte[textCompressedSize];
+        System.arraycopy(compressed, textOffset, compressedText, 0, compressedText.length);
+        if (textCompress) {
+            byte[] decompressedText = new byte[textDecompressedSize];
+            decompressor.decompress(compressedText, decompressedText, textDecompressedSize);
+            text = decompressedText;
+        } else {
+            text = compressedText;
+        }
+
+        byte[] ro;
+        byte[] compressedRo = new byte[roCompressedSize];
+        System.arraycopy(compressed, roOffset, compressedRo, 0, compressedRo.length);
+        if (roCompress) {
+            byte[] decompressedRo = new byte[roDecompressedSize];
+            decompressor.decompress(compressedRo, decompressedRo, roDecompressedSize);
+            ro = decompressedRo;
+        } else {
+            ro = compressedRo;
+        }
+
+        byte[] data;
+        byte[] compressedData = new byte[dataCompressedSize];
+        System.arraycopy(compressed, dataOffset, compressedData, 0, compressedData.length);
+        if (dataCompress) {
+            byte[] decompressedData = new byte[dataDecompressedSize];
+            decompressor.decompress(compressedData, decompressedData, dataDecompressedSize);
+            data = decompressedData;
+        } else {
+            data = compressedData;
+        }
+
+        // Copy the original header and modify as appropriate
+        byte[] header = new byte[nso_header_size];
+        System.arraycopy(compressed, 0, header, 0, nso_header_size);
+        int newTextOffset = header.length;
+        int newRoOffset = newTextOffset + text.length;
+        int newDataOffset = newRoOffset + ro.length;
+        FileFunctions.writeFullInt(header, 0xC, 0); // Clear out all flags (tells the Switch not to try decompressing anything, and don't check hashes).
+        FileFunctions.writeFullInt(header, 0x10, newTextOffset);
+        FileFunctions.writeFullInt(header, 0x20, newRoOffset);
+        FileFunctions.writeFullInt(header, 0x30, newDataOffset);
+        FileFunctions.writeFullInt(header, 0x60, text.length);
+        FileFunctions.writeFullInt(header, 0x64, ro.length);
+        FileFunctions.writeFullInt(header, 0x68, data.length);
+        for (int i = 0xA0; i < 0x100; i++) {
+            // Clear out hashes of .text/.rodata/.data, since we don't need them, and since the flags say not to look at this.
+            header[i] = 0x00;
+        }
+
+        byte[] decompressed = new byte[header.length + text.length + ro.length + data.length];
+        System.arraycopy(header, 0, decompressed, 0, header.length);
+        System.arraycopy(text, 0, decompressed, newTextOffset, text.length);
+        System.arraycopy(ro, 0, decompressed, newRoOffset, ro.length);
+        System.arraycopy(data, 0, decompressed, newDataOffset, data.length);
+
+        return decompressed;
+    }
+
+    // Retrieves a decompressed version of main (the game's executable).
     // The first time this is called, it will retrieve it straight from the
     // extracted folder. Future calls will rely on a cached version to speed
     // things up. If writing is enabled, it will cache the decompressed version
@@ -84,6 +177,10 @@ public class SwitchFileReader {
             RandomAccessFile mainFile = new RandomAccessFile(mainPath, "r");
             byte[] main = new byte[(int)mainFile.length()];
             mainFile.readFully(main);
+
+            if (isMainCompressed(main)) {
+                main = decompressMain(main);
+            }
 
             // Now actually make the copy or w/e
             if (writingEnabled) {
