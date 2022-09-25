@@ -1096,8 +1096,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                         switch (et) {
                             case LEVEL_GAME:
                                 evol.type = EvolutionType.LEVEL;
-                                // TODO Ajarmar please fix this lol
-                                //evol.to = pokes[romEntry.getInt("CosmoemEvolutionNumber")];
+                                evol.to = pokes.get(romEntry.getInt("CosmoemEvolutionNumber"));
                                 break;
                             case LEVEL_DAY_GAME:
                                 evol.type = EvolutionType.LEVEL_DAY;
