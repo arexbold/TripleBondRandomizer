@@ -552,6 +552,11 @@ public class BDSPRomHandler extends AbstractSwitchRomHandler {
     }
 
     @Override
+    protected String getContentId() {
+        return "0";
+    }
+
+    @Override
     protected boolean isGameUpdateSupported(int version) {
         return false;
     }

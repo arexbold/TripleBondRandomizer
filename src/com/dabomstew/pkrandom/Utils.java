@@ -97,7 +97,7 @@ public class Utils {
                 "green_translation.tbl", "gsc_english.tbl", "gsc_freger.tbl", "gsc_espita.tbl", "gba_english.tbl",
                 "gba_jpn.tbl", "Generation4.tbl", "Generation5.tbl", "gen1_offsets.ini", "gen2_offsets.ini",
                 "gen3_offsets.ini", "gen4_offsets.ini", "gen5_offsets.ini", "gen6_offsets.ini", "gen7_offsets.ini",
-                SysConstants.customNamesFile };
+                "swsh_offsets.ini", SysConstants.customNamesFile };
         for (String filename : required) {
             if (!FileFunctions.configExists(filename)) {
                 throw new FileNotFoundException(filename);

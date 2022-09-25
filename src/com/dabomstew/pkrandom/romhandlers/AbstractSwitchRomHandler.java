@@ -42,16 +42,21 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
 
     @Override
     public boolean loadRom(String filename) {
-        if (!this.detectSwitchGame(filename)) {
-            return false;
+        try {
+            loadedFN = filename;
+            fileReader = new SwitchFileReader(filename);
+            if (!this.detectSwitchGame(filename)) {
+                return false;
+            }
+            this.loadedROM(filename);
+            fileReader.setContentId(this.getContentId());
+            return true;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
         }
-        loadedFN = filename;
-        fileReader = new SwitchFileReader(filename);
-        this.loadedROM(filename);
-        return true;
     }
 
-    protected abstract boolean detectSwitchGame(String filePath);
+    protected abstract boolean detectSwitchGame(String filePath) throws IOException;
 
     @Override
     public String loadedFilename() {
@@ -63,6 +68,8 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
     protected abstract void savingROM() throws IOException;
 
     protected abstract String getGameAcronym();
+
+    protected abstract String getContentId();
 
     @Override
     public boolean saveRomFile(String filename, long seed) {

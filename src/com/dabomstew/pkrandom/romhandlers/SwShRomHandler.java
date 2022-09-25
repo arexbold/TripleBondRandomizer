@@ -2,12 +2,15 @@ package com.dabomstew.pkrandom.romhandlers;
 
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.Settings;
+import com.dabomstew.pkrandom.constants.Gen7Constants;
 import com.dabomstew.pkrandom.constants.Species;
 import com.dabomstew.pkrandom.constants.SwShConstants;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
 import com.dabomstew.pkrandom.hac.GFPack;
+import com.dabomstew.pkrandom.hac.SwitchFileReader;
 import com.dabomstew.pkrandom.pokemon.*;
+import jdk.internal.org.objectweb.asm.signature.SignatureWriter;
 import pptxt.N3DSTxtHandler;
 
 import java.awt.image.BufferedImage;
@@ -26,7 +29,15 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
 
         public boolean isLoadable(String filename) {
-            return detectSwitchGameInner(filename);
+            SwitchFileReader reader = new SwitchFileReader(filename);
+            try {
+                byte[] main = reader.getMain();
+                long actualMainCRC32 = FileFunctions.getCRC32(main);
+                return detectSwitchGameInner(actualMainCRC32);
+            } catch (IOException e) {
+                throw new RandomizerIOException(e);
+            }
+
         }
     }
 
@@ -38,19 +49,153 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         super(random, logStream);
     }
 
+    private static class RomEntry {
+        private String name;
+        private String contentId;
+        private long mainCRC32;
+        private Map<String, String> strings = new HashMap<>();
+        private Map<String, Integer> numbers = new HashMap<>();
+        private Map<String, int[]> arrayEntries = new HashMap<>();
+
+        private int getInt(String key) {
+            if (!numbers.containsKey(key)) {
+                numbers.put(key, 0);
+            }
+            return numbers.get(key);
+        }
+
+        private String getString(String key) {
+            if (!strings.containsKey(key)) {
+                strings.put(key, "");
+            }
+            return strings.get(key);
+        }
+    }
+
+    private static List<RomEntry> roms;
+
+    static {
+        loadROMInfo();
+    }
+
+    private static void loadROMInfo() {
+        roms = new ArrayList<>();
+        RomEntry current = null;
+        try {
+            Scanner sc = new Scanner(FileFunctions.openConfig("swsh_offsets.ini"), "UTF-8");
+            while (sc.hasNextLine()) {
+                String q = sc.nextLine().trim();
+                if (q.contains("//")) {
+                    q = q.substring(0, q.indexOf("//")).trim();
+                }
+                if (!q.isEmpty()) {
+                    if (q.startsWith("[") && q.endsWith("]")) {
+                        // New rom
+                        current = new RomEntry();
+                        current.name = q.substring(1, q.length() - 1);
+                        roms.add(current);
+                    } else {
+                        String[] r = q.split("=", 2);
+                        if (r.length == 1) {
+                            System.err.println("invalid entry " + q);
+                            continue;
+                        }
+                        if (r[1].endsWith("\r\n")) {
+                            r[1] = r[1].substring(0, r[1].length() - 2);
+                        }
+                        r[1] = r[1].trim();
+                        if (r[0].equals("ContentId")) {
+                            current.contentId = r[1];
+                        } else if (r[0].equals("MainCRC32")) {
+                            current.mainCRC32 = parseRILong("0x" + r[1].trim());
+                        } else if (r[0].endsWith("Offset") || r[0].endsWith("Count") || r[0].endsWith("Number")) {
+                            int offs = parseRIInt(r[1]);
+                            current.numbers.put(r[0], offs);
+                        } else if (r[1].startsWith("[") && r[1].endsWith("]")) {
+                            String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
+                            if (offsets.length == 1 && offsets[0].trim().isEmpty()) {
+                                current.arrayEntries.put(r[0], new int[0]);
+                            } else {
+                                int[] offs = new int[offsets.length];
+                                int c = 0;
+                                for (String off : offsets) {
+                                    offs[c++] = parseRIInt(off);
+                                }
+                                current.arrayEntries.put(r[0], offs);
+                            }
+                        } else if (r[0].equals("CopyFrom")) {
+                            for (RomEntry otherEntry : roms) {
+                                if (r[1].equalsIgnoreCase(otherEntry.contentId)) {
+                                    // copy from here
+                                    current.arrayEntries.putAll(otherEntry.arrayEntries);
+                                    current.numbers.putAll(otherEntry.numbers);
+                                    current.strings.putAll(otherEntry.strings);
+                                }
+                            }
+                        } else {
+                            current.strings.put(r[0],r[1]);
+                        }
+                    }
+                }
+            }
+            sc.close();
+        } catch (FileNotFoundException e) {
+            System.err.println("File not found!");
+        }
+    }
+
+    private static int parseRIInt(String off) {
+        int radix = 10;
+        off = off.trim().toLowerCase();
+        if (off.startsWith("0x") || off.startsWith("&h")) {
+            radix = 16;
+            off = off.substring(2);
+        }
+        try {
+            return Integer.parseInt(off, radix);
+        } catch (NumberFormatException ex) {
+            System.err.println("invalid base " + radix + "number " + off);
+            return 0;
+        }
+    }
+
+    private static long parseRILong(String off) {
+        int radix = 10;
+        off = off.trim().toLowerCase();
+        if (off.startsWith("0x") || off.startsWith("&h")) {
+            radix = 16;
+            off = off.substring(2);
+        }
+        try {
+            return Long.parseLong(off, radix);
+        } catch (NumberFormatException ex) {
+            System.err.println("invalid base " + radix + "number " + off);
+            return 0;
+        }
+    }
+
     @Override
-    protected boolean detectSwitchGame(String filePath) {
-        return detectSwitchGameInner(filePath);
+    protected boolean detectSwitchGame(String filePath) throws IOException {
+        byte[] main = this.readMain();
+        long actualMainCRC32 = FileFunctions.getCRC32(main);
+        return detectSwitchGameInner(actualMainCRC32);
     }
 
-    private static boolean detectSwitchGameInner(String filePath) {
-        // No other Pokemon games on Switch have camping (currently), so it's a signal that this is SwSh.
-        String pokeCampFoodstuffTablePath = filePath + File.separator + "romfs" + File.separator + "bin" + File.separator + "pokecamp" +
-                File.separator + "foodstuff" + File.separator + "pokecamp_foodstuff_table.prmb";
-        File pokeCampFoodstuffTableFile = new File(pokeCampFoodstuffTablePath);
-        return (pokeCampFoodstuffTableFile.exists() && pokeCampFoodstuffTableFile.isFile());
+    private static boolean detectSwitchGameInner(long actualMainCRC32) {
+        return entryFor(actualMainCRC32) != null;
     }
 
+    private static RomEntry entryFor(long actualMainCRC32) {
+        for (RomEntry re : roms) {
+            if (re.mainCRC32 == actualMainCRC32) {
+                return re;
+            }
+        }
+        return null;
+    }
+
+    // This ROM
+    private RomEntry romEntry;
     private Map<Integer,Pokemon> pokes;
     private Map<Integer,Map<Integer,Integer>> absolutePokeNumByBaseForme;
     private Map<Integer,Integer> dummyAbsolutePokeNums;
@@ -178,12 +323,10 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         List<EncounterSet> encounters = new ArrayList<>();
         try  {
             final int NUM_WEATHER_TABLES = 9;
-            // TODO move file name to offsets.ini file
-            byte[] wildData = this.readFile("bin/archive/field/resident/data_table.gfpak");
+            byte[] wildData = this.readFile(romEntry.getString("WildPokemonPack"));
             GFPack wildPack = new GFPack(wildData);
 
-            // TODO read from encount_k for sword
-            byte[] shieldData = wildPack.getDataFileName("encount_t.bin");
+            byte[] shieldData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
 
             SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(shieldData));
             for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
@@ -292,12 +435,10 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
         try  {
             final int NUM_WEATHER_TABLES = 9;
-            // TODO move file name to offsets.ini file
-            byte[] wildData = this.readFile("bin/archive/field/resident/data_table.gfpak");
+            byte[] wildData = this.readFile(romEntry.getString("WildPokemonPack"));
             GFPack wildPack = new GFPack(wildData);
 
-            // TODO read from encount_k for sword
-            byte[] shieldData = wildPack.getDataFileName("encount_t.bin");
+            byte[] shieldData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
 
             SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(shieldData));
             for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
@@ -676,7 +817,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public String getROMName() {
-        return "Pokemon SwSh";
+        return "Pokemon " + romEntry.name;
     }
 
     @Override
@@ -729,6 +870,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         try {
             byte[] main = this.readMain();
             byte[] test = this.readFile("bin/appli/autosave/bin/autosave_00.arc");
+            this.romEntry = entryFor(FileFunctions.getCRC32(main));
 
             loadPokemonStats();
 
@@ -739,9 +881,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     .filter(p -> (p == null || p.number <= SwShConstants.pokemonCount))
                     .collect(Collectors.toList());
 
-            // TODO move file path to offsets.ini file
-            abilityNames = getStrings("bin/message/English/common/tokusei.dat");
-            itemNames = getStrings("bin/message/English/common/itemname.dat");
+            abilityNames = getStrings(romEntry.getString("AbilityNames"));
+            itemNames = getStrings(romEntry.getString("ItemNames"));
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -749,8 +890,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     private void loadPokemonStats() {
         try {
-            // TODO move file name to offsets.ini file
-            byte[] personalInfo = this.readFile("bin/pml/personal/personal_total.bin");
+            byte[] personalInfo = this.readFile(romEntry.getString("PokemonStats"));
             String[] pokeNames = readPokemonNames();
             int pokemonCount = SwShConstants.pokemonCount;
             pokes = new TreeMap<>();
@@ -906,8 +1046,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         int pokemonCount = SwShConstants.pokemonCount;
         String[] pokeNames = new String[pokemonCount + 1];
         try {
-            // TODO move file name to offsets.ini file
-            List<String> nameList = getStrings("bin/message/English/common/monsname.dat");
+            List<String> nameList = getStrings(romEntry.getString("PokemonNames"));
             for (int i = 1; i <= pokemonCount; i++) {
                 pokeNames[i] = nameList.get(i);
             }
@@ -929,7 +1068,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         try {
             for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
                 Pokemon pk = pokeEntry.getValue();
-                byte[] evoEntry = readFile(String.format("bin/pml/evolution/evo_%03d.bin",pokeEntry.getKey()));
+                byte[] evoEntry = readFile(String.format(romEntry.getString("EvolutionEntryTemplate"), pokeEntry.getKey()));
                 boolean skipNext = false;
                 for (int evo = 0; evo < 9; evo++) {
                     int method = evoEntry[evo * 8];
@@ -957,7 +1096,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                         switch (et) {
                             case LEVEL_GAME:
                                 evol.type = EvolutionType.LEVEL;
-                                // TODO add this after offsets.ini file exists
+                                // TODO Ajarmar please fix this lol
                                 //evol.to = pokes[romEntry.getInt("CosmoemEvolutionNumber")];
                                 break;
                             case LEVEL_DAY_GAME:
@@ -1087,8 +1226,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         try {
             for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
                 Pokemon pk = pokeEntry.getValue();
-                // TODO read file path from offsets.ini file
-                byte[] evoEntry = readFile(String.format("bin/pml/evolution/evo_%03d.bin",pokeEntry.getKey()));
+                byte[] evoEntry = readFile(String.format(romEntry.getString("EvolutionEntryTemplate"),pokeEntry.getKey()));
                 // TODO shedinja bullshit
 //                if (pk.number == Species.nincada) {
 //                    writeShedinjaEvolution();
@@ -1153,6 +1291,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     protected String getGameAcronym() {
         return null;
+    }
+
+    @Override
+    protected String getContentId() {
+        return romEntry.contentId;
     }
 
     @Override

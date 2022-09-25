@@ -35,6 +35,7 @@ import java.util.Map;
 
 public class SwitchFileReader {
     private String extractedFilesPath;
+    private String contentId;
     private boolean writingEnabled;
     private Map<String, SwitchRomfsFile> romfsFiles;
     private String tmpFolder;
@@ -63,6 +64,10 @@ public class SwitchFileReader {
         } else {
             writingEnabled = false;
         }
+    }
+
+    public void setContentId(String contentId) {
+        this.contentId = contentId;
     }
 
     public String getTmpFolder() {
@@ -250,7 +255,7 @@ public class SwitchFileReader {
     }
 
     public void saveAsLayeredFS(String outputPath) throws IOException {
-        String layeredFSRootPath = outputPath + File.separator + "switch_game" + File.separator;
+        String layeredFSRootPath = outputPath + File.separator + this.contentId + File.separator;
         File layeredFSRootDir = new File(layeredFSRootPath);
         if (!layeredFSRootDir.exists()) {
             layeredFSRootDir.mkdirs();
