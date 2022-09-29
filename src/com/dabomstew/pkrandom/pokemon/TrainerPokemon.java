@@ -54,6 +54,9 @@ public class TrainerPokemon {
     // we store the whole "strength byte" so we can
     // write it unchanged when randomizing trainer pokemon.
     public int strength;
+
+    public int dynamaxLevel;
+    public boolean gmaxFactor;
     
     public boolean resetMoves = false;
 

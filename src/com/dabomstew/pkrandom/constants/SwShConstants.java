@@ -1,5 +1,6 @@
 package com.dabomstew.pkrandom.constants;
 
+import com.dabomstew.pkrandom.pokemon.Trainer;
 import com.dabomstew.pkrandom.pokemon.Type;
 
 import java.util.Arrays;
@@ -26,6 +27,8 @@ public class SwShConstants {
     public static final int bsSize = 0xB0;
 
     public static final int evolutionMethodCount = 48;
+
+    public static final int trainerCount = 437;         // Includes Trainer 0 which is not real
 
     public static final Type[] typeTable = constructTypeTable();
 
@@ -613,4 +616,162 @@ public class SwShConstants {
             "Shaking Trees",
             "Fishing"
     );
+
+    public static void tagTrainers(List<Trainer> trs) {
+
+        // Gym Trainers
+        tag(trs,"GYM1", 29, 30, 31);
+        tag(trs,"GYM2",45, 46, 47);
+        tag(trs,"GYM3",161, 162, 163);
+        tag(trs,"GYM4", 62, 63, 64, 65, 66, 67);
+        tag(trs,"GYM5", 113, 114, 115);
+        tag(trs,"GYM6", 79, 80, 81, 82, 83, 84, 85, 86);
+        tag(trs,"GYM7", 101, 102, 103, 104, 105, 106);
+        tag(trs,"GYM8", 150, 151, 152);
+
+        // Gym Leaders
+        tag(trs,"GYM1-LEADER", 32, 218, 258, 288, 289, 363, 365, 387, 413);     // Milo
+        tag(trs,"GYM2-LEADER",36, 210, 219, 259, 345, 388);                     // Nessa
+        tag(trs,"GYM3-LEADER",37, 220, 260, 344, 389);                          // Kabu
+        tag(trs,"GYM4-LEADER", 77, 78, 211, 212, 261, 262, 347, 349, 390, 391); // Bea and Allister
+        tag(trs,"GYM5-LEADER", 108, 364, 134, 231, 269, 341, 397);              // Opal and Bede
+        tag(trs,"GYM6-LEADER", 135, 136, 264, 265, 357, 358, 392, 393);         // Gordie and Melony
+        tag(trs,"GYM7-LEADER", 107, 266, 346, 394, 268, 342, 396);              // Piers and Marnie
+        tag(trs,"GYM8-LEADER", 144, 213, 267, 348, 395);                        // Raihan
+        tag(trs,"GYM9-LEADER", 359, 375);                                       // Avery
+        tag(trs,"GYM10-LEADER", 360, 377);                                      // Klara
+
+        tag(trs,"RIVAL2-0", 149);
+        tag(trs,"RIVAL2-1", 189);
+        tag(trs,"RIVAL2-2", 190);
+        tagRival(trs,"RIVAL3",249);
+        tag(trs,"RIVAL4-X",343);
+        tagRival(trs,"RIVAL5",348);
+        tagRival(trs,"RIVAL6",378);
+
+        tagRival(trs,"FRIEND1", 4);
+        tagRival(trs,"FRIEND2", 7);
+        tagRival(trs,"FRIEND3", 197);
+        tagRival(trs,"FRIEND4", 191);
+        tagRival(trs,"FRIEND5", 121);
+        tagRival(trs,"FRIEND6", 156);
+        tagRival(trs,"FRIEND7", 124);
+        tagRival(trs,"FRIEND8", 127);
+        tagRival(trs,"FRIEND9", 202);
+        tagRival(trs,"FRIEND10", 130);
+        tagRival(trs,"FRIEND11", 312);
+        tagRival(trs,"FRIEND12", 153);
+        tagRival(trs,"FRIEND13", 214);
+        tagRival(trs,"FRIEND14", 228);
+        tagRival(trs,"FRIEND15", 225);
+        tag(trs,"FRIEND16-0", 234, 235);
+        tag(trs,"FRIEND16-1", 236, 237);
+        tag(trs,"FRIEND16-2", 238, 239);
+        tag(trs,"FRIEND17-0", 252, 253);
+        tag(trs,"FRIEND17-1", 254, 255);
+        tag(trs,"FRIEND17-2", 256, 257);
+        tag(trs,"FRIEND18-0", 351, 352);
+        tag(trs,"FRIEND18-1", 353, 354);
+        tag(trs,"FRIEND18-2", 355, 356);
+        tag(trs,"FRIEND19-0", 381, 382);
+        tag(trs,"FRIEND19-1", 383, 384);
+        tag(trs,"FRIEND19-2", 385, 386);
+
+        tag(trs,"THEMED:BEDE-STRONG", 133, 195, 240);
+        tag(trs,"THEMED:MARNIE-STRONG", 138, 145, 196, 248, 431);
+        tag(trs,"THEMED:OLEANA-STRONG", 143);
+        tag(trs,"THEMED:SORDWARD-STRONG", 221, 223, 232, 362);
+        tag(trs,"THEMED:SHIELBERT-STRONG", 222, 224, 233, 350);
+        tag(trs,"THEMED:AVERY-STRONG", 315, 317, 319, 374, 414, 417, 419);
+        tag(trs,"THEMED:KLARA-STRONG", 316, 318, 320, 376, 415, 418, 420);
+        tag(trs,"THEMED:MUSTARD-STRONG", 312, 322, 323, 328, 329, 339, 340, 429, 430, 432, 433);
+        tag(trs,"THEMED:HONEY-STRONG", 324, 325, 326, 327);
+        tag(trs,"THEMED:PEONY-STRONG", 330, 361, 434);
+        tag(trs,"THEMED:ERIC-STRONG", 285, 286, 287);
+        tag(trs,"THEMED:ROSE-LEADER", 175);
+    }
+
+    private static void tagRival(List<Trainer> allTrainers, String tag, int offset) {
+        allTrainers.get(offset - 1).tag = tag + "-0";
+        allTrainers.get(offset).tag = tag + "-1";
+        allTrainers.get(offset + 1).tag = tag + "-2";
+
+    }
+
+    private static void tag(List<Trainer> allTrainers, String tag, int... numbers) {
+        for (int num : numbers) {
+            if (allTrainers.size() > (num - 1)) {
+                allTrainers.get(num - 1).tag = tag;
+            }
+        }
+    }
+
+    public static void setMultiBattleStatus(List<Trainer> trs) {
+        // All Double Battles in Gen 8 are internally treated as a Multi Battle
+        // 38 & 39: Interviewers Gillian and Cam (Route 5)
+        // 52 & 53: Music Crew Owen and Andrea
+        // 60 & 61: Daring Couple Robert and Jacqueline
+        // 74 & 75: Colleagues Jordan and Alison
+        // 99 & 100: Interviewers Gillian and Cam (Route 10)
+        // 105 & 106: Team Yell Grunt & Gym Trainer Joshua
+        // 140 & 309: Macro Cosmos's Mateo & Jane
+        // 141 & 310: Macro Cosmos's Kevin & Carla
+        // 142 & 311: Macro Cosmos's Adalyn & Justin
+        // 159 & 160: Team Yell Grunts in Galar Mine No. 2
+        // 185 & 186: Medical Team Iwan and Evelyn
+        // 223 & 224: Sordward & Shielbert
+        setMultiBattleStatus(trs, 38, 39, 52, 53, 60, 61, 74, 75, 99, 100, 105, 106, 140, 141, 142, 159, 160,
+                185, 186, 223, 224, 309, 310, 311
+        );
+    }
+
+    private static void setMultiBattleStatus(List<Trainer> allTrainers, int... numbers) {
+        for (int num : numbers) {
+            if (allTrainers.size() > (num - 1)) {
+                allTrainers.get(num - 1).multiBattleStatus = Trainer.MultiBattleStatus.ALWAYS;
+            }
+        }
+    }
+
+    public static void setForcedRivalStarterPositions(List<Trainer> allTrainers) {
+
+        // Hop 16
+        allTrainers.get(234 - 1).forceStarterPosition = 4;
+        allTrainers.get(235 - 1).forceStarterPosition = 4;
+        allTrainers.get(236 - 1).forceStarterPosition = 4;
+        allTrainers.get(237 - 1).forceStarterPosition = 4;
+        allTrainers.get(238 - 1).forceStarterPosition = 4;
+        allTrainers.get(239 - 1).forceStarterPosition = 4;
+
+        // Hop 17
+        allTrainers.get(252 - 1).forceStarterPosition = 2;
+        allTrainers.get(253 - 1).forceStarterPosition = 2;
+        allTrainers.get(254 - 1).forceStarterPosition = 2;
+        allTrainers.get(255 - 1).forceStarterPosition = 2;
+        allTrainers.get(256 - 1).forceStarterPosition = 2;
+        allTrainers.get(257 - 1).forceStarterPosition = 2;
+
+        // Hop 19
+        allTrainers.get(381 - 1).forceStarterPosition = 2;
+        allTrainers.get(382 - 1).forceStarterPosition = 2;
+        allTrainers.get(383 - 1).forceStarterPosition = 2;
+        allTrainers.get(384 - 1).forceStarterPosition = 2;
+        allTrainers.get(385 - 1).forceStarterPosition = 2;
+        allTrainers.get(386 - 1).forceStarterPosition = 2;
+
+        // Leon 1
+        allTrainers.get(149 - 1).forceStarterPosition = 4;
+        allTrainers.get(189 - 1).forceStarterPosition = 4;
+        allTrainers.get(190 - 1).forceStarterPosition = 4;
+
+        // Leon 2
+        allTrainers.get(249 - 1).forceStarterPosition = 3;
+        allTrainers.get(250 - 1).forceStarterPosition = 3;
+        allTrainers.get(251 - 1).forceStarterPosition = 3;
+
+        // Leon 3
+        allTrainers.get(378 - 1).forceStarterPosition = 3;
+        allTrainers.get(379 - 1).forceStarterPosition = 3;
+        allTrainers.get(380 - 1).forceStarterPosition = 3;
+    }
 }

@@ -1,8 +1,8 @@
 package com.dabomstew.pkrandom.romhandlers;
 
 import com.dabomstew.pkrandom.FileFunctions;
+import com.dabomstew.pkrandom.RomFunctions;
 import com.dabomstew.pkrandom.Settings;
-import com.dabomstew.pkrandom.constants.Gen7Constants;
 import com.dabomstew.pkrandom.constants.Species;
 import com.dabomstew.pkrandom.constants.SwShConstants;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
@@ -304,6 +304,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     }
 
     @Override
+    public int maxTrainerNameLength() {
+        return 10;
+    }
+
+    @Override
     public boolean altFormesCanHaveDifferentEvolutions() {
         return true;
     }
@@ -487,7 +492,90 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Trainer> getTrainers() {
-        return new ArrayList<>();
+        List<Trainer> allTrainers = new ArrayList<>();
+        try {
+            int trainernum = SwShConstants.trainerCount;
+            List<String> tclasses = this.getTrainerClassNames();
+            List<String> tnames = this.getTrainerNames();
+            Map<Integer,String> tnamesMap = new TreeMap<>();
+            for (int i = 0; i < tnames.size(); i++) {
+                tnamesMap.put(i,tnames.get(i));
+            }
+            for (int i = 1; i < trainernum; i++) {
+                byte[] trainer = readFile(String.format(romEntry.getString("TrainerDataTemplate"), i));
+                byte[] trpoke = readFile(String.format(romEntry.getString("TrainerPokemonTemplate"), i));
+                Trainer tr = new Trainer();
+                tr.index = i;
+                tr.trainerclass = trainer[0] & 0xFF;
+                int battleType = trainer[2] & 0xFF;
+                int numPokes = trainer[3] & 0xFF;
+                int trainerAILevel = trainer[12] & 0xFF;
+                boolean healer = trainer[15] != 0;
+                int pokeOffs = 0;
+                String trainerClass = tclasses.get(tr.trainerclass);
+                String trainerName = tnamesMap.getOrDefault(i, "UNKNOWN");
+                tr.fullDisplayName = trainerClass + " " + trainerName;
+
+                System.out.print(i + ": " + tr.fullDisplayName + " - ");
+                for (int poke = 0; poke < numPokes; poke++) {
+                    // Structure is
+                    // IV SB LV LV SP SP FRM FRM
+                    // (HI HI)
+                    // (M1 M1 M2 M2 M3 M3 M4 M4)
+                    // where SB = 0 0 Ab Ab 0 0 Fm Ml
+                    // Ab Ab = ability number, 0 for random
+                    // Fm = 1 for forced female
+                    // Ml = 1 for forced male
+                    // There's also a trainer flag to force gender, but
+                    // this allows fixed teams with mixed genders.
+
+                    // int secondbyte = trpoke[pokeOffs + 1] & 0xFF;
+                    int abilityAndFlag = trpoke[pokeOffs];
+                    TrainerPokemon tpk = new TrainerPokemon();
+                    tpk.abilitySlot = (abilityAndFlag >>> 4) & 0xF;
+                    tpk.forcedGenderFlag = (abilityAndFlag & 0xF);
+                    tpk.nature = trpoke[pokeOffs + 1];
+                    tpk.hpEVs = trpoke[pokeOffs + 2];
+                    tpk.atkEVs = trpoke[pokeOffs + 3];
+                    tpk.defEVs = trpoke[pokeOffs + 4];
+                    tpk.spatkEVs = trpoke[pokeOffs + 5];
+                    tpk.spdefEVs = trpoke[pokeOffs + 6];
+                    tpk.speedEVs = trpoke[pokeOffs + 7];
+                    tpk.dynamaxLevel = trpoke[pokeOffs + 8];
+                    tpk.gmaxFactor = trpoke[pokeOffs + 9] != 0;
+                    tpk.level = FileFunctions.read2ByteInt(trpoke, pokeOffs + 10);
+                    int species = FileFunctions.read2ByteInt(trpoke, pokeOffs + 12);
+                    tpk.pokemon = pokes.get(species);
+                    int formnum = FileFunctions.read2ByteInt(trpoke, pokeOffs + 14);
+                    tpk.forme = formnum;
+                    tpk.formeSuffix = SwShConstants.getFormeSuffixByBaseForme(species,formnum);
+                    tpk.heldItem = FileFunctions.read2ByteInt(trpoke, pokeOffs + 16);
+                    for (int move = 0; move < 4; move++) {
+                        tpk.moves[move] = FileFunctions.read2ByteInt(trpoke, pokeOffs + 18 + (move*2));
+                    }
+                    tpk.IVs = FileFunctions.readFullInt(trpoke, pokeOffs + 28);
+                    pokeOffs += 32;
+                    tr.pokemon.add(tpk);
+                    System.out.print(tpk.toString() + ", ");
+                }
+                System.out.println();
+                allTrainers.add(tr);
+            }
+            SwShConstants.tagTrainers(allTrainers);
+            SwShConstants.setForcedRivalStarterPositions(allTrainers);
+            SwShConstants.setMultiBattleStatus(allTrainers);
+//            if (romEntry.romType == Gen7Constants.Type_SM) {
+//                Gen7Constants.tagTrainersSM(allTrainers);
+//                Gen7Constants.setMultiBattleStatusSM(allTrainers);
+//            } else {
+//                Gen7Constants.tagTrainersUSUM(allTrainers);
+//                Gen7Constants.setMultiBattleStatusUSUM(allTrainers);
+//                Gen7Constants.setForcedRivalStarterPositionsUSUM(allTrainers);
+//            }
+        } catch (IOException ex) {
+            throw new RandomizerIOException(ex);
+        }
+        return allTrainers;
     }
 
     @Override
@@ -502,7 +590,66 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void setTrainers(List<Trainer> trainerData, boolean doubleBattleMode) {
+        Iterator<Trainer> allTrainers = trainerData.iterator();
+        try {
+            int trainernum = SwShConstants.trainerCount;
+            // Get current movesets in case we need to reset them for certain
+            // trainer mons.
+            Map<Integer, List<MoveLearnt>> movesets = this.getMovesLearnt();
+            for (int i = 1; i < trainernum; i++) {
+                byte[] trainer = readFile(String.format(romEntry.getString("TrainerDataTemplate"), i));
+                Trainer tr = allTrainers.next();
+                int numPokes = tr.pokemon.size();
+                trainer[3] = (byte) numPokes;
 
+                if (doubleBattleMode) {
+                    if (!tr.skipImportant()) {
+                        if (trainer[2] == 0) {
+                            trainer[2] = 1;
+                            trainer[12] |= 0x8; // Flag that needs to be set for trainers not to attack their own pokes
+                        }
+                    }
+                }
+
+                int bytesNeeded = 32 * numPokes;
+                byte[] trpoke = new byte[bytesNeeded];
+                int pokeOffs = 0;
+                Iterator<TrainerPokemon> tpokes = tr.pokemon.iterator();
+                for (int poke = 0; poke < numPokes; poke++) {
+                    TrainerPokemon tp = tpokes.next();
+                    byte abilityAndFlag = (byte)((tp.abilitySlot << 4) | tp.forcedGenderFlag);
+                    trpoke[pokeOffs] = abilityAndFlag;
+                    trpoke[pokeOffs + 1] = tp.nature;
+                    trpoke[pokeOffs + 2] = tp.hpEVs;
+                    trpoke[pokeOffs + 3] = tp.atkEVs;
+                    trpoke[pokeOffs + 4] = tp.defEVs;
+                    trpoke[pokeOffs + 5] = tp.spatkEVs;
+                    trpoke[pokeOffs + 6] = tp.spdefEVs;
+                    trpoke[pokeOffs + 7] = tp.speedEVs;
+                    FileFunctions.write2ByteInt(trpoke, pokeOffs + 10, tp.level);
+                    FileFunctions.write2ByteInt(trpoke, pokeOffs + 12, tp.pokemon.number);
+                    FileFunctions.write2ByteInt(trpoke, pokeOffs + 14, tp.forme);
+                    FileFunctions.write2ByteInt(trpoke, pokeOffs + 16, tp.heldItem);
+                    if (tp.resetMoves) {
+                        int[] pokeMoves = RomFunctions.getMovesAtLevel(getAltFormeOfPokemon(tp.pokemon, tp.forme).number, movesets, tp.level);
+                        for (int m = 0; m < 4; m++) {
+                            FileFunctions.write2ByteInt(trpoke, pokeOffs + 18 + m * 2, pokeMoves[m]);
+                        }
+                    } else {
+                        FileFunctions.write2ByteInt(trpoke, pokeOffs + 18, tp.moves[0]);
+                        FileFunctions.write2ByteInt(trpoke, pokeOffs + 20, tp.moves[1]);
+                        FileFunctions.write2ByteInt(trpoke, pokeOffs + 22, tp.moves[2]);
+                        FileFunctions.write2ByteInt(trpoke, pokeOffs + 24, tp.moves[3]);
+                    }
+                    FileFunctions.writeFullInt(trpoke, pokeOffs + 28, tp.IVs);
+                    pokeOffs += 32;
+                }
+                writeFile(String.format(romEntry.getString("TrainerDataTemplate"), i), trainer);
+                writeFile(String.format(romEntry.getString("TrainerPokemonTemplate"), i), trpoke);
+            }
+        } catch (IOException ex) {
+            throw new RandomizerIOException(ex);
+        }
     }
 
     @Override
@@ -512,7 +659,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public Map<Integer, List<MoveLearnt>> getMovesLearnt() {
-        return null;
+        return new HashMap<>();
     }
 
     @Override
@@ -652,12 +799,16 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public boolean canChangeTrainerText() {
-        return false;
+        return true;
     }
 
     @Override
     public List<String> getTrainerNames() {
-        return null;
+        try {
+            return getStrings(romEntry.getString("TrainerNames"));
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
@@ -667,17 +818,21 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public TrainerNameMode trainerNameMode() {
-        return null;
+        return TrainerNameMode.MAX_LENGTH;
     }
 
     @Override
     public List<Integer> getTCNameLengthsByTrainer() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
     public List<String> getTrainerClassNames() {
-        return null;
+        try {
+            return getStrings(romEntry.getString("TrainerClassNames"));
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
