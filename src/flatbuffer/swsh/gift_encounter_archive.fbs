@@ -11,7 +11,7 @@ table SwShGiftEncounter {
     ball_item_id:int;
     field_04:ubyte;
     hash1:ulong;
-    can_gigantamax:bool;
+    gmax_factor:bool;
     held_item:int;
     level:ubyte;
     species:int;

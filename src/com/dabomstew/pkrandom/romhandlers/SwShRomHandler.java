@@ -250,32 +250,114 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Pokemon> getStarters() {
-        return null;
+        List<StaticEncounter> starters = new ArrayList<>();
+        try {
+            byte[] data = readFile(romEntry.getString("GiftPokemon"));
+            SwShGiftEncounterArchive arc =
+                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            int[] starterGiftIndices = romEntry.arrayEntries.get("StarterGiftIndices");
+            for (int i: starterGiftIndices) {
+                SwShGiftEncounter starterGift = arc.giftEncounters(i);
+                StaticEncounter se = new StaticEncounter();
+                Pokemon pokemon = pokes.get(starterGift.species());
+                int forme = starterGift.form();
+                if (forme > pokemon.cosmeticForms && forme != 30 && forme != 31) {
+                    pokemon = getAltFormeOfPokemon(pokemon, forme);
+                }
+                se.pkmn = pokemon;
+                se.forme = forme;
+                se.level = starterGift.level();
+                se.heldItem = starterGift.heldItem();
+                starters.add(se);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+        return starters.stream().map(pk -> pk.pkmn).collect(Collectors.toList());
     }
 
     @Override
     public boolean setStarters(List<Pokemon> newStarters) {
-        return false;
+        try {
+            byte[] data = readFile(romEntry.getString("GiftPokemon"));
+            SwShGiftEncounterArchive arc =
+                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            int[] starterGiftIndices = romEntry.arrayEntries.get("StarterGiftIndices");
+            Iterator<Pokemon> newStarterIterator = newStarters.iterator();
+            for (int i: starterGiftIndices) {
+                Pokemon starter = newStarterIterator.next();
+                int forme = 0;
+                boolean checkCosmetics = true;
+                if (starter.formeNumber > 0) {
+                    forme = starter.formeNumber;
+                    starter = starter.baseForme;
+                    checkCosmetics = false;
+                }
+                if (checkCosmetics && starter.cosmeticForms > 0) {
+                    forme = starter.getCosmeticFormNumber(this.random.nextInt(starter.cosmeticForms));
+                } else if (!checkCosmetics && starter.cosmeticForms > 0) {
+                    forme += starter.getCosmeticFormNumber(this.random.nextInt(starter.cosmeticForms));
+                }
+                SwShGiftEncounter starterGift = arc.giftEncounters(i);
+                starterGift.mutateSpecies(starter.number);
+                starterGift.mutateForm(forme);
+            }
+            byte[] newStarterData = arc.getByteBuffer().array();
+            writeFile(romEntry.getString("GiftPokemon"),newStarterData);
+            return true;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public boolean hasStarterAltFormes() {
-        return false;
+        return true;
     }
 
     @Override
     public int starterCount() {
-        return 0;
+        return 3;
     }
 
     @Override
     public List<Integer> getStarterHeldItems() {
-        return null;
+        List<Integer> starterHeldItems = new ArrayList<>();
+        try {
+            byte[] data = readFile(romEntry.getString("GiftPokemon"));
+            SwShGiftEncounterArchive arc =
+                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            int[] starterGiftIndices = romEntry.arrayEntries.get("StarterGiftIndices");
+            for (int i: starterGiftIndices) {
+                SwShGiftEncounter starterGift = arc.giftEncounters(i);
+                int heldItem = starterGift.heldItem();
+                starterHeldItems.add(heldItem);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+
+        return starterHeldItems;
     }
 
     @Override
     public void setStarterHeldItems(List<Integer> items) {
-
+        try {
+            byte[] data = readFile(romEntry.getString("GiftPokemon"));
+            SwShGiftEncounterArchive arc =
+                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            int[] starterGiftIndices = romEntry.arrayEntries.get("StarterGiftIndices");
+            Iterator<Integer> itemsIter = items.iterator();
+            for (int i: starterGiftIndices) {
+                int item = itemsIter.next();
+                SwShGiftEncounter starterGift = arc.giftEncounters(i);
+                starterGift.mutateHeldItem(item);
+            }
+            byte[] newStarterData = arc.getByteBuffer().array();
+            writeFile(romEntry.getString("GiftPokemon"),newStarterData);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override

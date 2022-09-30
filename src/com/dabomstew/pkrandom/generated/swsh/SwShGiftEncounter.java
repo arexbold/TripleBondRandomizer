@@ -7,6 +7,7 @@ import java.lang.*;
 import java.util.*;
 import com.google.flatbuffers.*;
 
+@javax.annotation.Generated(value="flatc")
 @SuppressWarnings("unused")
 public final class SwShGiftEncounter extends Table {
   public static void ValidateVersion() { Constants.FLATBUFFERS_2_0_0(); }
@@ -16,33 +17,61 @@ public final class SwShGiftEncounter extends Table {
   public SwShGiftEncounter __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public int isEgg() { int o = __offset(4); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateIsEgg(int is_egg) { int o = __offset(4); if (o != 0) { bb.putInt(o + bb_pos, is_egg); return true; } else { return false; } }
   public int form() { int o = __offset(6); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateForm(int form) { int o = __offset(6); if (o != 0) { bb.put(o + bb_pos, (byte)form); return true; } else { return false; } }
   public int dynamaxLevel() { int o = __offset(8); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateDynamaxLevel(int dynamax_level) { int o = __offset(8); if (o != 0) { bb.put(o + bb_pos, (byte)dynamax_level); return true; } else { return false; } }
   public int ballItemId() { int o = __offset(10); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateBallItemId(int ball_item_id) { int o = __offset(10); if (o != 0) { bb.putInt(o + bb_pos, ball_item_id); return true; } else { return false; } }
   public int field04() { int o = __offset(12); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateField04(int field_04) { int o = __offset(12); if (o != 0) { bb.put(o + bb_pos, (byte)field_04); return true; } else { return false; } }
   public long hash1() { int o = __offset(14); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
-  public boolean canGigantamax() { int o = __offset(16); return o != 0 ? 0!=bb.get(o + bb_pos) : false; }
+  public boolean mutateHash1(long hash1) { int o = __offset(14); if (o != 0) { bb.putLong(o + bb_pos, hash1); return true; } else { return false; } }
+  public boolean gmaxFactor() { int o = __offset(16); return o != 0 ? 0!=bb.get(o + bb_pos) : false; }
+  public boolean mutateGmaxFactor(boolean gmax_factor) { int o = __offset(16); if (o != 0) { bb.put(o + bb_pos, (byte)(gmax_factor ? 1 : 0)); return true; } else { return false; } }
   public int heldItem() { int o = __offset(18); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateHeldItem(int held_item) { int o = __offset(18); if (o != 0) { bb.putInt(o + bb_pos, held_item); return true; } else { return false; } }
   public int level() { int o = __offset(20); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateLevel(int level) { int o = __offset(20); if (o != 0) { bb.put(o + bb_pos, (byte)level); return true; } else { return false; } }
   public int species() { int o = __offset(22); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateSpecies(int species) { int o = __offset(22); if (o != 0) { bb.putInt(o + bb_pos, species); return true; } else { return false; } }
   public int field0a() { int o = __offset(24); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateField0a(int field_0a) { int o = __offset(24); if (o != 0) { bb.put(o + bb_pos, (byte)field_0a); return true; } else { return false; } }
   public int memoryCode() { int o = __offset(26); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateMemoryCode(int memory_code) { int o = __offset(26); if (o != 0) { bb.put(o + bb_pos, (byte)memory_code); return true; } else { return false; } }
   public int memoryData() { int o = __offset(28); return o != 0 ? bb.getShort(o + bb_pos) & 0xFFFF : 0; }
+  public boolean mutateMemoryData(int memory_data) { int o = __offset(28); if (o != 0) { bb.putShort(o + bb_pos, (short)memory_data); return true; } else { return false; } }
   public int memoryFeel() { int o = __offset(30); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateMemoryFeel(int memory_feel) { int o = __offset(30); if (o != 0) { bb.put(o + bb_pos, (byte)memory_feel); return true; } else { return false; } }
   public int memoryLevel() { int o = __offset(32); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateMemoryLevel(int memory_level) { int o = __offset(32); if (o != 0) { bb.put(o + bb_pos, (byte)memory_level); return true; } else { return false; } }
   public long otNameId() { int o = __offset(34); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
+  public boolean mutateOtNameId(long ot_name_id) { int o = __offset(34); if (o != 0) { bb.putLong(o + bb_pos, ot_name_id); return true; } else { return false; } }
   public int otGender() { int o = __offset(36); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateOtGender(int ot_gender) { int o = __offset(36); if (o != 0) { bb.putInt(o + bb_pos, ot_gender); return true; } else { return false; } }
   public int shinyLock() { int o = __offset(38); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateShinyLock(int shiny_lock) { int o = __offset(38); if (o != 0) { bb.putInt(o + bb_pos, shiny_lock); return true; } else { return false; } }
   public int nature() { int o = __offset(40); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateNature(int nature) { int o = __offset(40); if (o != 0) { bb.putInt(o + bb_pos, nature); return true; } else { return false; } }
   public int gender() { int o = __offset(42); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateGender(int gender) { int o = __offset(42); if (o != 0) { bb.put(o + bb_pos, (byte)gender); return true; } else { return false; } }
   public byte ivSpe() { int o = __offset(44); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvSpe(byte iv_spe) { int o = __offset(44); if (o != 0) { bb.put(o + bb_pos, iv_spe); return true; } else { return false; } }
   public byte ivAtk() { int o = __offset(46); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvAtk(byte iv_atk) { int o = __offset(46); if (o != 0) { bb.put(o + bb_pos, iv_atk); return true; } else { return false; } }
   public byte ivDef() { int o = __offset(48); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvDef(byte iv_def) { int o = __offset(48); if (o != 0) { bb.put(o + bb_pos, iv_def); return true; } else { return false; } }
   public byte ivHp() { int o = __offset(50); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvHp(byte iv_hp) { int o = __offset(50); if (o != 0) { bb.put(o + bb_pos, iv_hp); return true; } else { return false; } }
   public byte ivSpa() { int o = __offset(52); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvSpa(byte iv_spa) { int o = __offset(52); if (o != 0) { bb.put(o + bb_pos, iv_spa); return true; } else { return false; } }
   public byte ivSpd() { int o = __offset(54); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvSpd(byte iv_spd) { int o = __offset(54); if (o != 0) { bb.put(o + bb_pos, iv_spd); return true; } else { return false; } }
   public int ability() { int o = __offset(56); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateAbility(int ability) { int o = __offset(56); if (o != 0) { bb.putInt(o + bb_pos, ability); return true; } else { return false; } }
   public int specialMove() { int o = __offset(58); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateSpecialMove(int special_move) { int o = __offset(58); if (o != 0) { bb.putInt(o + bb_pos, special_move); return true; } else { return false; } }
 
   public static int createSwShGiftEncounter(FlatBufferBuilder builder,
       int is_egg,
@@ -51,7 +80,7 @@ public final class SwShGiftEncounter extends Table {
       int ball_item_id,
       int field_04,
       long hash1,
-      boolean can_gigantamax,
+      boolean gmax_factor,
       int held_item,
       int level,
       int species,
@@ -98,7 +127,7 @@ public final class SwShGiftEncounter extends Table {
     SwShGiftEncounter.addMemoryCode(builder, memory_code);
     SwShGiftEncounter.addField0a(builder, field_0a);
     SwShGiftEncounter.addLevel(builder, level);
-    SwShGiftEncounter.addCanGigantamax(builder, can_gigantamax);
+    SwShGiftEncounter.addGmaxFactor(builder, gmax_factor);
     SwShGiftEncounter.addField04(builder, field_04);
     SwShGiftEncounter.addDynamaxLevel(builder, dynamax_level);
     SwShGiftEncounter.addForm(builder, form);
@@ -112,7 +141,7 @@ public final class SwShGiftEncounter extends Table {
   public static void addBallItemId(FlatBufferBuilder builder, int ballItemId) { builder.addInt(3, ballItemId, 0); }
   public static void addField04(FlatBufferBuilder builder, int field04) { builder.addByte(4, (byte)field04, (byte)0); }
   public static void addHash1(FlatBufferBuilder builder, long hash1) { builder.addLong(5, hash1, 0L); }
-  public static void addCanGigantamax(FlatBufferBuilder builder, boolean canGigantamax) { builder.addBoolean(6, canGigantamax, false); }
+  public static void addGmaxFactor(FlatBufferBuilder builder, boolean gmaxFactor) { builder.addBoolean(6, gmaxFactor, false); }
   public static void addHeldItem(FlatBufferBuilder builder, int heldItem) { builder.addInt(7, heldItem, 0); }
   public static void addLevel(FlatBufferBuilder builder, int level) { builder.addByte(8, (byte)level, (byte)0); }
   public static void addSpecies(FlatBufferBuilder builder, int species) { builder.addInt(9, species, 0); }
