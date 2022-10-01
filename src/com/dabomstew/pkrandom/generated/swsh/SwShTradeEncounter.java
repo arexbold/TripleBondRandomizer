@@ -7,6 +7,7 @@ import java.lang.*;
 import java.util.*;
 import com.google.flatbuffers.*;
 
+@javax.annotation.Generated(value="flatc")
 @SuppressWarnings("unused")
 public final class SwShTradeEncounter extends Table {
   public static void ValidateVersion() { Constants.FLATBUFFERS_2_0_0(); }
@@ -16,40 +17,75 @@ public final class SwShTradeEncounter extends Table {
   public SwShTradeEncounter __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public int form() { int o = __offset(4); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateForm(int form) { int o = __offset(4); if (o != 0) { bb.put(o + bb_pos, (byte)form); return true; } else { return false; } }
   public int dynamaxLevel() { int o = __offset(6); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateDynamaxLevel(int dynamax_level) { int o = __offset(6); if (o != 0) { bb.put(o + bb_pos, (byte)dynamax_level); return true; } else { return false; } }
   public int ballItemId() { int o = __offset(8); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateBallItemId(int ball_item_id) { int o = __offset(8); if (o != 0) { bb.putInt(o + bb_pos, ball_item_id); return true; } else { return false; } }
   public int field03() { int o = __offset(10); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateField03(int field_03) { int o = __offset(10); if (o != 0) { bb.putInt(o + bb_pos, field_03); return true; } else { return false; } }
   public long hash0() { int o = __offset(12); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
+  public boolean mutateHash0(long hash0) { int o = __offset(12); if (o != 0) { bb.putLong(o + bb_pos, hash0); return true; } else { return false; } }
   public boolean canGigantamax() { int o = __offset(14); return o != 0 ? 0!=bb.get(o + bb_pos) : false; }
+  public boolean mutateCanGigantamax(boolean can_gigantamax) { int o = __offset(14); if (o != 0) { bb.put(o + bb_pos, (byte)(can_gigantamax ? 1 : 0)); return true; } else { return false; } }
   public int heldItem() { int o = __offset(16); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateHeldItem(int held_item) { int o = __offset(16); if (o != 0) { bb.putInt(o + bb_pos, held_item); return true; } else { return false; } }
   public int level() { int o = __offset(18); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateLevel(int level) { int o = __offset(18); if (o != 0) { bb.put(o + bb_pos, (byte)level); return true; } else { return false; } }
   public int species() { int o = __offset(20); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateSpecies(int species) { int o = __offset(20); if (o != 0) { bb.putInt(o + bb_pos, species); return true; } else { return false; } }
   public long hash1() { int o = __offset(22); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
+  public boolean mutateHash1(long hash1) { int o = __offset(22); if (o != 0) { bb.putLong(o + bb_pos, hash1); return true; } else { return false; } }
   public int trainerId() { int o = __offset(24); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateTrainerId(int trainer_id) { int o = __offset(24); if (o != 0) { bb.putInt(o + bb_pos, trainer_id); return true; } else { return false; } }
   public int memory() { int o = __offset(26); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateMemory(int memory) { int o = __offset(26); if (o != 0) { bb.put(o + bb_pos, (byte)memory); return true; } else { return false; } }
   public int textVar() { int o = __offset(28); return o != 0 ? bb.getShort(o + bb_pos) & 0xFFFF : 0; }
+  public boolean mutateTextVar(int text_var) { int o = __offset(28); if (o != 0) { bb.putShort(o + bb_pos, (short)text_var); return true; } else { return false; } }
   public int feeling() { int o = __offset(30); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateFeeling(int feeling) { int o = __offset(30); if (o != 0) { bb.put(o + bb_pos, (byte)feeling); return true; } else { return false; } }
   public int intensity() { int o = __offset(32); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateIntensity(int intensity) { int o = __offset(32); if (o != 0) { bb.put(o + bb_pos, (byte)intensity); return true; } else { return false; } }
   public long hash2() { int o = __offset(34); return o != 0 ? bb.getLong(o + bb_pos) : 0L; }
+  public boolean mutateHash2(long hash2) { int o = __offset(34); if (o != 0) { bb.putLong(o + bb_pos, hash2); return true; } else { return false; } }
   public int otGender() { int o = __offset(36); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateOtGender(int ot_gender) { int o = __offset(36); if (o != 0) { bb.put(o + bb_pos, (byte)ot_gender); return true; } else { return false; } }
   public int requiredForm() { int o = __offset(38); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateRequiredForm(int required_form) { int o = __offset(38); if (o != 0) { bb.put(o + bb_pos, (byte)required_form); return true; } else { return false; } }
   public int requiredSpecies() { int o = __offset(40); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateRequiredSpecies(int required_species) { int o = __offset(40); if (o != 0) { bb.putInt(o + bb_pos, required_species); return true; } else { return false; } }
   public int requiredNature() { int o = __offset(42); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateRequiredNature(int required_nature) { int o = __offset(42); if (o != 0) { bb.putInt(o + bb_pos, required_nature); return true; } else { return false; } }
   public int unknownRequirement() { int o = __offset(44); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateUnknownRequirement(int unknown_requirement) { int o = __offset(44); if (o != 0) { bb.put(o + bb_pos, (byte)unknown_requirement); return true; } else { return false; } }
   public int shinyLock() { int o = __offset(46); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateShinyLock(int shiny_lock) { int o = __offset(46); if (o != 0) { bb.putInt(o + bb_pos, shiny_lock); return true; } else { return false; } }
   public int nature() { int o = __offset(48); return o != 0 ? bb.getInt(o + bb_pos) : 0; }
+  public boolean mutateNature(int nature) { int o = __offset(48); if (o != 0) { bb.putInt(o + bb_pos, nature); return true; } else { return false; } }
   public int gender() { int o = __offset(50); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateGender(int gender) { int o = __offset(50); if (o != 0) { bb.put(o + bb_pos, (byte)gender); return true; } else { return false; } }
   public byte ivSpe() { int o = __offset(52); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvSpe(byte iv_spe) { int o = __offset(52); if (o != 0) { bb.put(o + bb_pos, iv_spe); return true; } else { return false; } }
   public byte ivAtk() { int o = __offset(54); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvAtk(byte iv_atk) { int o = __offset(54); if (o != 0) { bb.put(o + bb_pos, iv_atk); return true; } else { return false; } }
   public byte ivDef() { int o = __offset(56); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvDef(byte iv_def) { int o = __offset(56); if (o != 0) { bb.put(o + bb_pos, iv_def); return true; } else { return false; } }
   public byte ivHp() { int o = __offset(58); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvHp(byte iv_hp) { int o = __offset(58); if (o != 0) { bb.put(o + bb_pos, iv_hp); return true; } else { return false; } }
   public byte ivSpa() { int o = __offset(60); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvSpa(byte iv_spa) { int o = __offset(60); if (o != 0) { bb.put(o + bb_pos, iv_spa); return true; } else { return false; } }
   public byte ivSpd() { int o = __offset(62); return o != 0 ? bb.get(o + bb_pos) : 0; }
+  public boolean mutateIvSpd(byte iv_spd) { int o = __offset(62); if (o != 0) { bb.put(o + bb_pos, iv_spd); return true; } else { return false; } }
   public int abilityNumber() { int o = __offset(64); return o != 0 ? bb.get(o + bb_pos) & 0xFF : 0; }
+  public boolean mutateAbilityNumber(int ability_number) { int o = __offset(64); if (o != 0) { bb.put(o + bb_pos, (byte)ability_number); return true; } else { return false; } }
   public int relearn1() { int o = __offset(66); return o != 0 ? bb.getShort(o + bb_pos) & 0xFFFF : 0; }
+  public boolean mutateRelearn1(int relearn1) { int o = __offset(66); if (o != 0) { bb.putShort(o + bb_pos, (short)relearn1); return true; } else { return false; } }
   public int relearn2() { int o = __offset(68); return o != 0 ? bb.getShort(o + bb_pos) & 0xFFFF : 0; }
+  public boolean mutateRelearn2(int relearn2) { int o = __offset(68); if (o != 0) { bb.putShort(o + bb_pos, (short)relearn2); return true; } else { return false; } }
   public int relearn3() { int o = __offset(70); return o != 0 ? bb.getShort(o + bb_pos) & 0xFFFF : 0; }
+  public boolean mutateRelearn3(int relearn3) { int o = __offset(70); if (o != 0) { bb.putShort(o + bb_pos, (short)relearn3); return true; } else { return false; } }
   public int relearn4() { int o = __offset(72); return o != 0 ? bb.getShort(o + bb_pos) & 0xFFFF : 0; }
+  public boolean mutateRelearn4(int relearn4) { int o = __offset(72); if (o != 0) { bb.putShort(o + bb_pos, (short)relearn4); return true; } else { return false; } }
 
   public static int createSwShTradeEncounter(FlatBufferBuilder builder,
       int form,

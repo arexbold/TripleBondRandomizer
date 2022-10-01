@@ -4,10 +4,7 @@ import com.dabomstew.pkrandom.pokemon.MoveCategory;
 import com.dabomstew.pkrandom.pokemon.Trainer;
 import com.dabomstew.pkrandom.pokemon.Type;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SwShConstants {
     public static final int pokemonCount = 898; // includes unused pokemon
@@ -32,6 +29,8 @@ public class SwShConstants {
     public static final int trainerCount = 437;         // Includes Trainer 0 which is not real
 
     public static final int learnsetEntrySize = 0x104;
+
+    public static final int duplicateTrade = 9;
 
     public static final Type[] typeTable = constructTypeTable();
 
@@ -423,6 +422,39 @@ public class SwShConstants {
             672, 686, 690, 695, 696, 697, 698, 699, 700, 701, 702, 703, 719, 723, 724, 725, 726, 727, 728, 729, 730,
             731, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741
     );
+
+    public static Map<Integer, List<Integer>> getHardcodedTradeTextOffsets() {
+        Map<Integer, List<Integer>> hardcodedTradeTextOffsets = new HashMap<>();
+        hardcodedTradeTextOffsets.put(0, Collections.singletonList(127));
+        hardcodedTradeTextOffsets.put(1, Collections.singletonList(128));
+        hardcodedTradeTextOffsets.put(2, Collections.singletonList(129));
+        hardcodedTradeTextOffsets.put(3, Collections.singletonList(130));
+        hardcodedTradeTextOffsets.put(4, Collections.singletonList(131));
+        hardcodedTradeTextOffsets.put(5, Collections.singletonList(132));
+        hardcodedTradeTextOffsets.put(6, Collections.singletonList(133));
+        hardcodedTradeTextOffsets.put(7, Collections.singletonList(134));
+        hardcodedTradeTextOffsets.put(8, Collections.singletonList(135));
+        hardcodedTradeTextOffsets.put(10, Collections.singletonList(136));
+        hardcodedTradeTextOffsets.put(11, Collections.singletonList(137));
+        hardcodedTradeTextOffsets.put(12, Arrays.asList(0, 3, 4));
+        hardcodedTradeTextOffsets.put(13, Arrays.asList(8, 11, 12));
+        hardcodedTradeTextOffsets.put(14, Arrays.asList(16, 17, 20));
+        hardcodedTradeTextOffsets.put(15, Arrays.asList(24, 25, 26, 27, 28));
+        hardcodedTradeTextOffsets.put(16, Collections.singletonList(32));
+        hardcodedTradeTextOffsets.put(17, Collections.singletonList(40));
+        hardcodedTradeTextOffsets.put(18, Arrays.asList(48, 49, 52));
+        hardcodedTradeTextOffsets.put(19, Arrays.asList(56, 59, 60));
+        hardcodedTradeTextOffsets.put(20, Arrays.asList(64, 67, 68));
+        hardcodedTradeTextOffsets.put(21, Arrays.asList(72, 73, 75));
+        hardcodedTradeTextOffsets.put(22, Arrays.asList(80, 81, 84));
+        return hardcodedTradeTextOffsets;
+    }
+
+    public static final List<Integer> tradeNickNameOffsets = Arrays.asList(142, 143, 144, 145, 146, 147, 148, 149, 150,
+            150, 151, 152, 6, 14, 22, 30, 38, 46, 54, 62, 70, 78, 86);
+
+    public static final List<Integer> tradeOTOffsets = Arrays.asList(153, 153, 153, 153, 153, 153, 153, 153, 153, 153,
+            153, 153, 7, 15, 23, 31, 39, 47, 55, 63, 71, 79, 87);
 
     public static String getZoneName(long hash) {
         return zoneNames.get(hash);

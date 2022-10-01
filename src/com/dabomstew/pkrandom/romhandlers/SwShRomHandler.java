@@ -1148,12 +1148,129 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<IngameTrade> getIngameTrades() {
-        return null;
+        List<IngameTrade> ingameTrades = new ArrayList<>();
+        try {
+            byte[] tradeData = readFile(romEntry.getString("TradePokemon"));
+            SwShTradeEncounterArchive tradeEncounters =
+                    SwShTradeEncounterArchive.getRootAsSwShTradeEncounterArchive(ByteBuffer.wrap(tradeData));
+            List<String> tradeStrings = getStrings(romEntry.getString("TradePokemonStrings"));
+            List<Integer> nickNameOffsets = SwShConstants.tradeNickNameOffsets;
+            List<Integer> otOffsets = SwShConstants.tradeOTOffsets;
+            for (int i = 0; i < tradeEncounters.tradeEncountersLength(); i++) {
+                if (i == SwShConstants.duplicateTrade) {
+                    continue;
+                }
+                SwShTradeEncounter tradeEncounter = tradeEncounters.tradeEncounters(i);
+                IngameTrade trade = new IngameTrade();
+                int givenSpecies = tradeEncounter.species();
+                int requestedSpecies = tradeEncounter.requiredSpecies();
+                Pokemon givenPokemon = pokes.get(givenSpecies);
+                Pokemon requestedPokemon = pokes.get(requestedSpecies);
+                int givenForme = tradeEncounter.form();
+                if (givenForme > givenPokemon.cosmeticForms && givenForme != 30 && givenForme != 31) {
+                    givenPokemon = getAltFormeOfPokemon(givenPokemon, givenForme);
+                }
+                int requestedForme = tradeEncounter.requiredForm();
+                if (requestedForme > requestedPokemon.cosmeticForms && requestedForme != 30 && requestedForme != 31) {
+                    requestedPokemon = getAltFormeOfPokemon(requestedPokemon, requestedForme);
+                }
+                trade.givenPokemon = givenPokemon;
+                trade.requestedPokemon = requestedPokemon;
+                trade.nickname = tradeStrings.get(nickNameOffsets.get(i));
+                trade.otName = tradeStrings.get(otOffsets.get(i));
+                trade.otId = tradeEncounter.trainerId();
+                trade.ivs = new int[6];
+                trade.ivs[0] = tradeEncounter.ivHp();
+                trade.ivs[1] = tradeEncounter.ivAtk();
+                trade.ivs[2] = tradeEncounter.ivDef();
+                trade.ivs[3] = tradeEncounter.ivSpe();
+                trade.ivs[4] = tradeEncounter.ivSpa();
+                trade.ivs[5] = tradeEncounter.ivSpd();
+                trade.item = tradeEncounter.heldItem();
+                if (trade.item < 0) {
+                    trade.item = 0;
+                }
+                ingameTrades.add(trade);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+        return ingameTrades;
     }
 
     @Override
     public void setIngameTrades(List<IngameTrade> trades) {
+        try {
+            List<IngameTrade> oldTrades = this.getIngameTrades();
+            byte[] tradeData = readFile(romEntry.getString("TradePokemon"));
+            SwShTradeEncounterArchive tradeEncounters =
+                    SwShTradeEncounterArchive.getRootAsSwShTradeEncounterArchive(ByteBuffer.wrap(tradeData));
+            List<String> tradeStrings = getStrings(romEntry.getString("TradePokemonStrings"));
+            Map<Integer, List<Integer>> hardcodedTradeTextOffsets = SwShConstants.getHardcodedTradeTextOffsets();
+            List<Integer> nickNameOffsets = SwShConstants.tradeNickNameOffsets;
+            List<Integer> otOffsets = SwShConstants.tradeOTOffsets;
+            for (int i = 0; i < tradeEncounters.tradeEncountersLength(); i++) {
+                int j = i;
+                if (i >= SwShConstants.duplicateTrade) {
+                    j = i - 1;
+                }
+                IngameTrade trade = trades.get(j);
+                SwShTradeEncounter tradeEncounter = tradeEncounters.tradeEncounters(i);
+                Pokemon givenPokemon = trade.givenPokemon;
+                int forme = 0;
+                if (givenPokemon.formeNumber > 0) {
+                    forme = givenPokemon.formeNumber;
+                    givenPokemon = givenPokemon.baseForme;
+                }
+                tradeEncounter.mutateSpecies(givenPokemon.number);
+                tradeEncounter.mutateForm(forme);
+                tradeEncounter.mutateRequiredSpecies(trade.requestedPokemon.number);
+                tradeStrings.set(nickNameOffsets.get(j),trade.nickname);
+                tradeStrings.set(otOffsets.get(j),trade.otName);
+                tradeEncounter.mutateTrainerId(trade.otId);
+                tradeEncounter.mutateIvHp((byte)trade.ivs[0]);
+                tradeEncounter.mutateIvAtk((byte)trade.ivs[1]);
+                tradeEncounter.mutateIvDef((byte)trade.ivs[2]);
+                tradeEncounter.mutateIvSpe((byte)trade.ivs[3]);
+                tradeEncounter.mutateIvSpa((byte)trade.ivs[4]);
+                tradeEncounter.mutateIvSpd((byte)trade.ivs[5]);
+                tradeEncounter.mutateHeldItem(trade.item);
 
+                List<Integer> hardcodedTextOffsetsForThisTrade = hardcodedTradeTextOffsets.get(i);
+                if (hardcodedTextOffsetsForThisTrade != null) {
+                    updateHardcodedTradeText(oldTrades.get(j), trade, tradeStrings, hardcodedTextOffsetsForThisTrade);
+                }
+            }
+            writeFile(romEntry.getString("TradePokemon"),tradeEncounters.getByteBuffer().array());
+            setStrings(romEntry.getString("TradePokemonStrings"), tradeStrings);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
+    private void updateHardcodedTradeText(IngameTrade oldTrade, IngameTrade newTrade, List<String> tradeStrings, List<Integer> hardcodedTextOffsets) {
+        for (int offset : hardcodedTextOffsets) {
+            String hardcodedText = tradeStrings.get(offset);
+            String oldRequestedName = oldTrade.requestedPokemon.name;
+            String oldGivenName = oldTrade.givenPokemon.name;
+            String newRequestedName = newTrade.requestedPokemon.name;
+            String newGivenName = newTrade.givenPokemon.name;
+            hardcodedText = hardcodedText.replace("Galarian Pokémon", "a certain Pokémon");
+            hardcodedText = hardcodedText.replace("a Galarian " + oldRequestedName, newRequestedName);
+            hardcodedText = hardcodedText.replace("Galarian " + oldRequestedName, newRequestedName);
+            hardcodedText = hardcodedText.replace(oldRequestedName + " in Galar", newRequestedName);
+            hardcodedText = hardcodedText.replace("a " + oldRequestedName, newRequestedName);
+            hardcodedText = hardcodedText.replace("an " + oldRequestedName, newRequestedName);
+            hardcodedText = hardcodedText.replace("A " + oldRequestedName, newRequestedName);
+            hardcodedText = hardcodedText.replace("Kantonian " + oldGivenName, newGivenName);
+            hardcodedText = hardcodedText.replace("my " + oldGivenName, "my " + newGivenName);
+            hardcodedText = hardcodedText.replace(oldGivenName + " I caught abroad", newGivenName + " I caught abroad");
+            hardcodedText = hardcodedText.replace("super-rare " + oldGivenName, "super-rare " + newGivenName);
+            hardcodedText = hardcodedText.replace("one from my region", newGivenName);
+            hardcodedText = hardcodedText.replace(oldRequestedName, newRequestedName);
+            hardcodedText = hardcodedText.replace(oldGivenName, newGivenName);
+            tradeStrings.set(offset, hardcodedText);
+        }
     }
 
     @Override
@@ -1801,7 +1918,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             byte[] oldRawFile = this.readFile(fileName);
             // TODO handle romType better
             byte[] newRawFile = N3DSTxtHandler.saveEntry(oldRawFile, strings, 100);
-            // TODO save file
+            writeFile(fileName, newRawFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
