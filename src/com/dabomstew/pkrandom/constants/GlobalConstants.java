@@ -76,7 +76,11 @@ public class GlobalConstants {
 
     public static final List<Integer> doubleHitMoves = Arrays.asList(
             Moves.bonemerang, Moves.doubleHit, Moves.doubleIronBash, Moves.doubleKick, Moves.dragonDarts,
-            Moves.dualChop, Moves.gearGrind, Moves.twineedle);
+            Moves.dualChop, Moves.gearGrind, Moves.twineedle, Moves.dualWingbeat);
+
+    public static final List<Integer> tripleHitMoves = Arrays.asList(
+            Moves.surgingStrikes
+    );
 
     public static final List<Integer> varyingPowerZMoves = Arrays.asList(
             Moves.breakneckBlitzPhysical, Moves.breakneckBlitzSpecial,
@@ -107,6 +111,13 @@ public class GlobalConstants {
 
     public static final List<Integer> zMoves = Stream.concat(fixedPowerZMoves.stream(),
             varyingPowerZMoves.stream()).collect(Collectors.toList());
+
+    public static final List<Integer> dynamaxMoves = Arrays.asList(
+            Moves.maxGuard, Moves.maxFlare, Moves.maxFlutterby, Moves.maxLightning, Moves.maxStrike, Moves.maxKnuckle,
+            Moves.maxPhantasm, Moves.maxHailstorm, Moves.maxOoze, Moves.maxGeyser, Moves.maxAirstream,
+            Moves.maxStarfall, Moves.maxWyrmwind, Moves.maxMindstorm, Moves.maxRockfall, Moves.maxQuake,
+            Moves.maxDarkness, Moves.maxOvergrowth, Moves.maxSteelspike
+    );
 
     public static Map<Integer,StatChange> getStatChanges(int generation) {
         Map<Integer,StatChange> map = new TreeMap<>();

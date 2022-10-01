@@ -3,6 +3,8 @@ package com.dabomstew.pkrandom.romhandlers;
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.RomFunctions;
 import com.dabomstew.pkrandom.Settings;
+import com.dabomstew.pkrandom.constants.GlobalConstants;
+import com.dabomstew.pkrandom.constants.Moves;
 import com.dabomstew.pkrandom.constants.Species;
 import com.dabomstew.pkrandom.constants.SwShConstants;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
@@ -10,7 +12,6 @@ import com.dabomstew.pkrandom.generated.swsh.*;
 import com.dabomstew.pkrandom.hac.GFPack;
 import com.dabomstew.pkrandom.hac.SwitchFileReader;
 import com.dabomstew.pkrandom.pokemon.*;
-import jdk.internal.org.objectweb.asm.signature.SignatureWriter;
 import pptxt.N3DSTxtHandler;
 
 import java.awt.image.BufferedImage;
@@ -202,6 +203,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     private List<Pokemon> pokemonList;
     private List<Pokemon> pokemonListInclFormes;
     private List<String> abilityNames, itemNames;
+    private Move[] moves;
 
     @Override
     public boolean isRomValid() {
@@ -383,6 +385,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public List<Integer> getUselessAbilities() {
         return new ArrayList<>(SwShConstants.uselessAbilities);
+    }
+
+    @Override
+    public List<Integer> getMovesBannedFromLevelup() {
+        return SwShConstants.unusableMoves;
     }
 
     @Override
@@ -598,7 +605,6 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 String trainerName = tnamesMap.getOrDefault(i, "UNKNOWN");
                 tr.fullDisplayName = trainerClass + " " + trainerName;
 
-                System.out.print(i + ": " + tr.fullDisplayName + " - ");
                 for (int poke = 0; poke < numPokes; poke++) {
                     // Structure is
                     // IV SB LV LV SP SP FRM FRM
@@ -638,22 +644,12 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     tpk.IVs = FileFunctions.readFullInt(trpoke, pokeOffs + 28);
                     pokeOffs += 32;
                     tr.pokemon.add(tpk);
-                    System.out.print(tpk.toString() + ", ");
                 }
-                System.out.println();
                 allTrainers.add(tr);
             }
             SwShConstants.tagTrainers(allTrainers);
             SwShConstants.setForcedRivalStarterPositions(allTrainers);
             SwShConstants.setMultiBattleStatus(allTrainers);
-//            if (romEntry.romType == Gen7Constants.Type_SM) {
-//                Gen7Constants.tagTrainersSM(allTrainers);
-//                Gen7Constants.setMultiBattleStatusSM(allTrainers);
-//            } else {
-//                Gen7Constants.tagTrainersUSUM(allTrainers);
-//                Gen7Constants.setMultiBattleStatusUSUM(allTrainers);
-//                Gen7Constants.setForcedRivalStarterPositionsUSUM(allTrainers);
-//            }
         } catch (IOException ex) {
             throw new RandomizerIOException(ex);
         }
@@ -736,32 +732,170 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Move> getMoves() {
-        return null;
+        return Arrays.asList(moves);
     }
 
     @Override
     public Map<Integer, List<MoveLearnt>> getMovesLearnt() {
-        return new HashMap<>();
+        Map<Integer, List<MoveLearnt>> movesets = new TreeMap<>();
+        try {
+            byte[] movesLearnt = readFile(romEntry.getString("PokemonLearnsets"));
+            int pokemonCount = SwShConstants.pokemonCount;
+            int formeCount = SwShConstants.formeCount;
+            for (int i = 1; i <= pokemonCount + formeCount; i++) {
+                Pokemon pkmn = pokes.get(i);
+                if (pkmn == null) {
+                    continue;
+                }
+                int moveDataLoc = i * SwShConstants.learnsetEntrySize;
+                List<MoveLearnt> learnt = new ArrayList<>();
+                while (FileFunctions.read2ByteInt(movesLearnt, moveDataLoc) != 0xFFFF ||
+                        FileFunctions.read2ByteInt(movesLearnt, moveDataLoc + 2) != 0xFFFF) {
+                    int move = FileFunctions.read2ByteInt(movesLearnt, moveDataLoc);
+                    int level = FileFunctions.read2ByteInt(movesLearnt, moveDataLoc + 2);
+                    MoveLearnt ml = new MoveLearnt();
+                    ml.level = level;
+                    ml.move = move;
+                    learnt.add(ml);
+                    moveDataLoc += 4;
+                }
+                movesets.put(pkmn.number, learnt);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+        return movesets;
     }
 
     @Override
     public void setMovesLearnt(Map<Integer, List<MoveLearnt>> movesets) {
-
+        try {
+            byte[] movesLearnt = readFile(romEntry.getString("PokemonLearnsets"));
+            int pokemonCount = SwShConstants.pokemonCount;
+            int formeCount = SwShConstants.formeCount;
+            for (int i = 1; i <= pokemonCount + formeCount; i++) {
+                Pokemon pkmn = pokes.get(i);
+                if (pkmn == null) {
+                    continue;
+                }
+                List<MoveLearnt> learnt = movesets.get(pkmn.number);
+                int moveDataLoc = i * SwShConstants.learnsetEntrySize;
+                for (MoveLearnt ml: learnt) {
+                    FileFunctions.write2ByteInt(movesLearnt, moveDataLoc, ml.move);
+                    FileFunctions.write2ByteInt(movesLearnt, moveDataLoc + 2, ml.level);
+                    moveDataLoc += 4;
+                }
+                while (moveDataLoc < (i+1) * SwShConstants.learnsetEntrySize) {
+                    FileFunctions.writeFullInt(movesLearnt, moveDataLoc, 0xFFFFFFFF);
+                    moveDataLoc += 4;
+                }
+            }
+            // Save
+            writeFile(romEntry.getString("PokemonLearnsets"), movesLearnt);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public Map<Integer, List<Integer>> getEggMoves() {
-        return null;
+        Map<Integer, List<Integer>> eggMoves = new TreeMap<>();
+        try {
+            TreeMap<Pokemon, Integer> altFormeEggMoveFiles = new TreeMap<>();
+            for (int i = 1; i <= SwShConstants.pokemonCount; i++) {
+                Pokemon pkmn = pokes.get(i);
+                if (pkmn == null) {
+                    continue;
+                }
+                byte[] movedata = readFile(String.format(romEntry.getString("EggMoveTemplate"),i));
+                int formeReference = FileFunctions.read2ByteInt(movedata, 0);
+                if (formeReference != pkmn.number) {
+                    altFormeEggMoveFiles.put(pkmn, formeReference);
+                }
+                int numberOfEggMoves = FileFunctions.read2ByteInt(movedata, 2);
+                List<Integer> moves = new ArrayList<>();
+                for (int j = 0; j < numberOfEggMoves; j++) {
+                    int move = FileFunctions.read2ByteInt(movedata, 4 + (j * 2));
+                    moves.add(move);
+                }
+                eggMoves.put(pkmn.number, moves);
+            }
+            Iterator<Pokemon> iter = altFormeEggMoveFiles.keySet().iterator();
+            while (iter.hasNext()) {
+                Pokemon originalForme = iter.next();
+                int formeNumber = 1;
+                int fileNumber = altFormeEggMoveFiles.get(originalForme);
+                Pokemon altForme = getAltFormeOfPokemon(originalForme, formeNumber);
+                while (!originalForme.equals(altForme)) {
+                    byte[] movedata = readFile(String.format(romEntry.getString("EggMoveTemplate"),fileNumber));
+                    int numberOfEggMoves = FileFunctions.read2ByteInt(movedata, 2);
+                    List<Integer> moves = new ArrayList<>();
+                    for (int j = 0; j < numberOfEggMoves; j++) {
+                        int move = FileFunctions.read2ByteInt(movedata, 4 + (j * 2));
+                        moves.add(move);
+                    }
+                    eggMoves.put(altForme.number, moves);
+                    formeNumber++;
+                    fileNumber++;
+                    altForme = getAltFormeOfPokemon(originalForme, formeNumber);
+                }
+                iter.remove();
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+        return eggMoves;
     }
 
     @Override
     public void setEggMoves(Map<Integer, List<Integer>> eggMoves) {
-
+        try {
+            TreeMap<Pokemon, Integer> altFormeEggMoveFiles = new TreeMap<>();
+            for (int i = 1; i <= SwShConstants.pokemonCount; i++) {
+                Pokemon pkmn = pokes.get(i);
+                if (pkmn == null) {
+                    continue;
+                }
+                byte[] movedata = readFile(String.format(romEntry.getString("EggMoveTemplate"),i));
+                int formeReference = FileFunctions.read2ByteInt(movedata, 0);
+                if (formeReference != pkmn.number) {
+                    altFormeEggMoveFiles.put(pkmn, formeReference);
+                }
+                List<Integer> moves = eggMoves.get(pkmn.number);
+                for (int j = 0; j < moves.size(); j++) {
+                    FileFunctions.write2ByteInt(movedata, 4 + (j * 2), moves.get(j));
+                }
+                // Save
+                writeFile(String.format(romEntry.getString("EggMoveTemplate"),i), movedata);
+            }
+            Iterator<Pokemon> iter = altFormeEggMoveFiles.keySet().iterator();
+            while (iter.hasNext()) {
+                Pokemon originalForme = iter.next();
+                int formeNumber = 1;
+                int fileNumber = altFormeEggMoveFiles.get(originalForme);
+                Pokemon altForme = getAltFormeOfPokemon(originalForme, formeNumber);
+                while (!originalForme.equals(altForme)) {
+                    byte[] movedata = readFile(String.format(romEntry.getString("EggMoveTemplate"),fileNumber));
+                    List<Integer> moves = eggMoves.get(altForme.number);
+                    for (int j = 0; j < moves.size(); j++) {
+                        FileFunctions.write2ByteInt(movedata, 4 + (j * 2), moves.get(j));
+                    }
+                    // Save
+                    writeFile(String.format(romEntry.getString("EggMoveTemplate"),fileNumber), movedata);
+                    formeNumber++;
+                    fileNumber++;
+                    altForme = getAltFormeOfPokemon(originalForme, formeNumber);
+                }
+                iter.remove();
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public boolean supportsFourStartingMoves() {
-        return false;
+        return true;
     }
 
     @Override
@@ -826,7 +960,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Integer> getHMMoves() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -1110,6 +1244,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             this.romEntry = entryFor(FileFunctions.getCRC32(main));
 
             loadPokemonStats();
+            loadMoves();
 
             pokemonListInclFormes = new ArrayList<>(pokes.values());
             pokemonListInclFormes.add(0,null);  // For compatibility with AbstractRomHandler; this will be removed later
@@ -1396,9 +1531,134 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
+    private void loadMoves() {
+        try {
+            moves = new Move[SwShConstants.moveCount + 1];
+            List<String> moveNames = getStrings(romEntry.getString("MoveNames"));
+            for (int i = 1; i <= SwShConstants.moveCount; i++) {
+                byte[] moveData = readFile(String.format(romEntry.getString("MoveDataTemplate"),i));
+                SwShMove move = SwShMove.getRootAsSwShMove(ByteBuffer.wrap(moveData));
+                moves[i] = new Move();
+                moves[i].name = moveNames.get(i);
+                moves[i].number = i;
+                moves[i].internalId = i;
+                moves[i].effectIndex = move.effectSequence();
+                moves[i].hitratio = move.accuracy();
+                moves[i].power = move.power();
+                moves[i].pp = move.pp();
+                moves[i].type = SwShConstants.typeTable[move.type() & 0xFF];
+                moves[i].flinchPercentChance = move.flinch();
+                moves[i].target = move.rawTarget();
+                moves[i].category = SwShConstants.moveCategoryIndices[move.category() & 0xFF];
+                moves[i].priority = move.priority();
+
+                int critStages = move.critStage() & 0xFF;
+                if (critStages == 6) {
+                    moves[i].criticalChance = CriticalChance.GUARANTEED;
+                } else if (critStages > 0) {
+                    moves[i].criticalChance = CriticalChance.INCREASED;
+                }
+
+                int internalStatusType = move.inflict();
+                moves[i].makesContact = move.flagMakesContact();
+                moves[i].isChargeMove = move.flagCharge();
+                moves[i].isRechargeMove = move.flagRecharge();
+                moves[i].isPunchMove = move.flagPunch();
+                moves[i].isSoundMove = move.flagSound();
+                moves[i].isTrapMove = internalStatusType == 8;
+                switch (moves[i].effectIndex) {
+                    case SwShConstants.noDamageTargetTrappingEffect:
+                    case SwShConstants.noDamageFieldTrappingEffect:
+                    case SwShConstants.damageAdjacentFoesTrappingEffect:
+                    case SwShConstants.damageTargetTrappingEffect:
+                        moves[i].isTrapMove = true;
+                        break;
+                }
+
+                int qualities = move.quality();
+                int recoilOrAbsorbPercent = move.recoil();
+                if (qualities == SwShConstants.damageAbsorbQuality) {
+                    moves[i].absorbPercent = recoilOrAbsorbPercent;
+                } else {
+                    moves[i].recoilPercent = -recoilOrAbsorbPercent;
+                }
+
+                if (i == Moves.swift) {
+                    perfectAccuracy = (int)moves[i].hitratio;
+                }
+
+                if (GlobalConstants.normalMultihitMoves.contains(i)) {
+                    moves[i].hitCount = 19 / 6.0;
+                } else if (GlobalConstants.doubleHitMoves.contains(i)) {
+                    moves[i].hitCount = 2;
+                } else if (GlobalConstants.tripleHitMoves.contains(i)) {
+                    moves[i].hitCount = 3;
+                } else if (i == Moves.tripleKick || i == Moves.tripleAxel) {
+                    moves[i].hitCount = 2.71; // this assumes the first hit lands
+                }
+
+                switch (qualities) {
+                    case SwShConstants.noDamageStatChangeQuality:
+                    case SwShConstants.noDamageStatusAndStatChangeQuality:
+                        // All Allies or Self
+                        if (moves[i].target == 6 || moves[i].target == 7) {
+                            moves[i].statChangeMoveType = StatChangeMoveType.NO_DAMAGE_USER;
+                        } else if (moves[i].target == 2) {
+                            moves[i].statChangeMoveType = StatChangeMoveType.NO_DAMAGE_ALLY;
+                        } else if (moves[i].target == 8) {
+                            moves[i].statChangeMoveType = StatChangeMoveType.NO_DAMAGE_ALL;
+                        } else {
+                            moves[i].statChangeMoveType = StatChangeMoveType.NO_DAMAGE_TARGET;
+                        }
+                        break;
+                    case SwShConstants.damageTargetDebuffQuality:
+                        moves[i].statChangeMoveType = StatChangeMoveType.DAMAGE_TARGET;
+                        break;
+                    case SwShConstants.damageUserBuffQuality:
+                        moves[i].statChangeMoveType = StatChangeMoveType.DAMAGE_USER;
+                        break;
+                    default:
+                        moves[i].statChangeMoveType = StatChangeMoveType.NONE_OR_UNKNOWN;
+                        break;
+                }
+
+                moves[i].statChanges[0].type = StatChangeType.values()[move.stat1()];
+                moves[i].statChanges[0].stages = move.stat1Stage();
+                moves[i].statChanges[0].percentChance = move.stat1Percent();
+                moves[i].statChanges[1].type = StatChangeType.values()[move.stat2()];
+                moves[i].statChanges[1].stages = move.stat2Stage();
+                moves[i].statChanges[1].percentChance = move.stat2Percent();
+                moves[i].statChanges[2].type = StatChangeType.values()[move.stat3()];
+                moves[i].statChanges[2].stages = move.stat3Stage();
+                moves[i].statChanges[2].percentChance = move.stat3Percent();
+
+                // Exclude status types that aren't in the StatusType enum.
+                if (internalStatusType < 7) {
+                    moves[i].statusType = StatusType.values()[internalStatusType];
+                    if (moves[i].statusType == StatusType.POISON && (i == Moves.toxic || i == Moves.poisonFang)) {
+                        moves[i].statusType = StatusType.TOXIC_POISON;
+                    }
+                    moves[i].statusPercentChance = move.inflictPercent();
+                    switch (qualities) {
+                        case SwShConstants.noDamageStatusQuality:
+                        case SwShConstants.noDamageStatusAndStatChangeQuality:
+                            moves[i].statusMoveType = StatusMoveType.NO_DAMAGE;
+                            break;
+                        case SwShConstants.damageStatusQuality:
+                            moves[i].statusMoveType = StatusMoveType.DAMAGE;
+                            break;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
     @Override
     protected void savingROM() throws IOException {
         savePokemonStats();
+        saveMoves();
     }
 
     private void savePokemonStats() {
@@ -1506,7 +1766,30 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
-
+    private void saveMoves() {
+        try {
+            int moveCount = SwShConstants.moveCount;
+            for (int i = 1; i <= moveCount; i++) {
+                byte[] moveData = readFile(String.format(romEntry.getString("MoveDataTemplate"),i));
+                SwShMove move = SwShMove.getRootAsSwShMove(ByteBuffer.wrap(moveData));
+                move.mutateCategory(SwShConstants.moveCategoryToByte(moves[i].category));
+                move.mutatePower(moves[i].power);
+                move.mutateType(SwShConstants.typeToByte(moves[i].type));
+                int hitratio = (int) Math.round(moves[i].hitratio);
+                if (hitratio < 0) {
+                    hitratio = 0;
+                }
+                if (hitratio > 101) {
+                    hitratio = 100;
+                }
+                move.mutateAccuracy(hitratio);
+                move.mutatePp(moves[i].pp);
+                writeFile(String.format(romEntry.getString("MoveDataTemplate"),i),move.getByteBuffer().array());
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
     private List<String> getStrings(String fileName) throws IOException {
         byte[] rawFile = this.readFile(fileName);
         // TODO handle romType better

@@ -2119,8 +2119,8 @@ public class NewRandomizerGUI {
         pbsFollowMegaEvosCheckBox.setSelected(false);
         pbsUpdateComboBox.setVisible(true);
         pbsUpdateComboBox.setEnabled(false);
-        pbsUpdateComboBox.setSelectedIndex(0);
         pbsUpdateComboBox.setModel(new DefaultComboBoxModel<>(new String[] { "--" }));
+        pbsUpdateComboBox.setSelectedIndex(0);
         pbsAssignEvoStatsRandomlyCheckBox.setVisible(true);
         pbsAssignEvoStatsRandomlyCheckBox.setEnabled(false);
         pbsAssignEvoStatsRandomlyCheckBox.setSelected(false);
@@ -2310,8 +2310,8 @@ public class NewRandomizerGUI {
         mdUpdateMovesCheckBox.setSelected(false);
         mdUpdateComboBox.setVisible(true);
         mdUpdateComboBox.setEnabled(false);
-        mdUpdateComboBox.setSelectedIndex(0);
         mdUpdateComboBox.setModel(new DefaultComboBoxModel<>(new String[] { "--" }));
+        mdUpdateComboBox.setSelectedIndex(0);
         pmsUnchangedRadioButton.setVisible(true);
         pmsUnchangedRadioButton.setEnabled(false);
         pmsUnchangedRadioButton.setSelected(false);

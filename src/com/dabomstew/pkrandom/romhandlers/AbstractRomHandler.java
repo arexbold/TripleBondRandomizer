@@ -3684,6 +3684,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         allBanned.addAll(hms);
         allBanned.addAll(this.getMovesBannedFromLevelup());
         allBanned.addAll(GlobalConstants.zMoves);
+        allBanned.addAll(GlobalConstants.dynamaxMoves);
         allBanned.addAll(this.getIllegalMoves());
 
         for (Move mv : allMoves) {
@@ -4445,7 +4446,8 @@ public abstract class AbstractRomHandler implements RomHandler {
 
         for (Move mv : usableMoves) {
             if (GlobalConstants.bannedRandomMoves[mv.number] || GlobalConstants.zMoves.contains(mv.number) ||
-                    hms.contains(mv.number) || banned.contains(mv.number)) {
+                    GlobalConstants.dynamaxMoves.contains(mv.number) || hms.contains(mv.number) ||
+                    banned.contains(mv.number)) {
                 unusableMoves.add(mv);
             } else if (GlobalConstants.bannedForDamagingMove[mv.number] || !mv.isGoodDamaging(perfectAccuracy)) {
                 unusableDamagingMoves.add(mv);
@@ -4708,7 +4710,8 @@ public abstract class AbstractRomHandler implements RomHandler {
 
         for (Move mv : usableMoves) {
             if (GlobalConstants.bannedRandomMoves[mv.number] || tms.contains(mv.number) || hms.contains(mv.number)
-                    || banned.contains(mv.number) || GlobalConstants.zMoves.contains(mv.number)) {
+                    || banned.contains(mv.number) || GlobalConstants.zMoves.contains(mv.number)
+                    || GlobalConstants.dynamaxMoves.contains(mv.number)) {
                 unusableMoves.add(mv);
             } else if (GlobalConstants.bannedForDamagingMove[mv.number] || !mv.isGoodDamaging(perfectAccuracy)) {
                 unusableDamagingMoves.add(mv);

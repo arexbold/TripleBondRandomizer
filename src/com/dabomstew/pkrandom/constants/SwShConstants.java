@@ -1,5 +1,6 @@
 package com.dabomstew.pkrandom.constants;
 
+import com.dabomstew.pkrandom.pokemon.MoveCategory;
 import com.dabomstew.pkrandom.pokemon.Trainer;
 import com.dabomstew.pkrandom.pokemon.Type;
 
@@ -10,7 +11,7 @@ import java.util.Map;
 
 public class SwShConstants {
     public static final int pokemonCount = 898; // includes unused pokemon
-    public static final int formeCount = 294;   // includes unused formes
+    public static final int formeCount = 293;   // includes unused formes
     public static final int moveCount = 826;
     public static final int highestAbilityIndex = Abilities.asOneGrimNeigh;
 
@@ -29,6 +30,8 @@ public class SwShConstants {
     public static final int evolutionMethodCount = 48;
 
     public static final int trainerCount = 437;         // Includes Trainer 0 which is not real
+
+    public static final int learnsetEntrySize = 0x104;
 
     public static final Type[] typeTable = constructTypeTable();
 
@@ -387,6 +390,39 @@ public class SwShConstants {
             Abilities.flowerGift, Abilities.zenMode, Abilities.stanceChange, Abilities.shieldsDown, Abilities.schooling,
             Abilities.disguise, Abilities.battleBond, Abilities.powerConstruct, Abilities.rksSystem,
             Abilities.gulpMissile, Abilities.iceFace, Abilities.hungerSwitch);
+
+    public static final MoveCategory[] moveCategoryIndices = { MoveCategory.STATUS, MoveCategory.PHYSICAL,
+            MoveCategory.SPECIAL };
+
+    public static byte moveCategoryToByte(MoveCategory cat) {
+        switch (cat) {
+            case PHYSICAL:
+                return 1;
+            case SPECIAL:
+                return 2;
+            case STATUS:
+            default:
+                return 0;
+        }
+    }
+
+    public static final int noDamageTargetTrappingEffect = 106, noDamageFieldTrappingEffect = 354,
+            damageAdjacentFoesTrappingEffect = 373, damageTargetTrappingEffect = 384;
+
+    public static final int noDamageStatusQuality = 1, noDamageStatChangeQuality = 2, damageStatusQuality = 4,
+            noDamageStatusAndStatChangeQuality = 5, damageTargetDebuffQuality = 6, damageUserBuffQuality = 7,
+            damageAbsorbQuality = 8;
+
+    public static final List<Integer> unusableMoves = Arrays.asList(
+            2, 3, 4, 13, 26, 27, 41, 49, 82, 96, 99, 112, 117, 119, 121, 125, 128, 131, 132, 140, 145, 146, 148, 149,
+            158, 159, 166, 169, 171, 185, 193, 216, 218, 222, 228, 237, 265, 274, 287, 289, 290, 293, 294, 300, 301,
+            302, 316, 318, 320, 324, 327, 346, 354, 357, 358, 363, 373, 376, 377, 378, 381, 382, 386, 391, 426, 429,
+            431, 443, 445, 448, 449, 456, 464, 465, 466, 477, 481, 485, 498, 507, 516, 531, 537, 547, 563, 569, 593,
+            600, 617, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639,
+            640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 665, 671,
+            672, 686, 690, 695, 696, 697, 698, 699, 700, 701, 702, 703, 719, 723, 724, 725, 726, 727, 728, 729, 730,
+            731, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741
+    );
 
     public static String getZoneName(long hash) {
         return zoneNames.get(hash);
