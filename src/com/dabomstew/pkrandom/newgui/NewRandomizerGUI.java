@@ -2757,6 +2757,7 @@ public class NewRandomizerGUI {
             pbsStandardizeEXPCurvesCheckBox.setEnabled(true);
             pbsLegendariesSlowRadioButton.setSelected(true);
             pbsUpdateBaseStatsCheckBox.setEnabled(pokemonGeneration < 8);
+            pbsUpdateBaseStatsCheckBox.setVisible(pokemonGeneration < 8);
             pbsFollowMegaEvosCheckBox.setVisible(romHandler.hasMegaEvolutions());
             pbsUpdateComboBox.setVisible(pokemonGeneration < 8);
             ExpCurve[] expCurves = getEXPCurvesForGeneration(pokemonGeneration);

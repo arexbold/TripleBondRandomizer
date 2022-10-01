@@ -576,7 +576,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public boolean hasWildAltFormes() {
-        return false;
+        return true;
     }
 
     @Override
@@ -1233,7 +1233,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public boolean hasFunctionalFormes() {
-        return false;
+        return true;
     }
 
     @Override
