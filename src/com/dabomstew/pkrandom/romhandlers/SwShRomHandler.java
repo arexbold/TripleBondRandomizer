@@ -1914,7 +1914,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         // to act as the species ID, and the third instruction loads 0 to act as the forme ID.
         offset = find(main, SwShConstants.shedinjaLocator);
         if (offset > 0) {
-            int patchedSpeciesInstruction = createMovzInstruction(1, extraEvolution.number, false);
+            int patchedSpeciesInstruction = createMovzInstruction(1, extraEvolution.getBaseNumber(), false);
             FileFunctions.writeFullInt(main, offset, patchedSpeciesInstruction);
             if (extraEvolution.formeNumber != 0) {
                 int patchedFormeInstruction = createMovzInstruction(2, extraEvolution.formeNumber, false);
