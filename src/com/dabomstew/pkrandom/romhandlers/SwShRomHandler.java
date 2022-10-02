@@ -1880,7 +1880,6 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
-    // TODO: Fix issue where mods to "main" literally don't work in certain emulators (and maybe real hardware).
     private void writeShedinjaEvolution() {
         Pokemon nincada = pokes.get(Species.nincada);
 
@@ -1916,9 +1915,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         offset = find(main, SwShConstants.shedinjaLocator);
         if (offset > 0) {
             int patchedSpeciesInstruction = createMovzInstruction(1, extraEvolution.number, false);
-            int patchedFormeInstruction = createMovzInstruction(2, extraEvolution.formeNumber, false);
             FileFunctions.writeFullInt(main, offset, patchedSpeciesInstruction);
-            // FileFunctions.writeFullInt(main, offset + 8, patchedFormeInstruction);
+            if (extraEvolution.formeNumber != 0) {
+                int patchedFormeInstruction = createMovzInstruction(2, extraEvolution.formeNumber, false);
+                FileFunctions.writeFullInt(main, offset + 8, patchedFormeInstruction);
+            }
         }
 
         // Now that we've handled the hardcoded Shedinja evolution, delete it so that
