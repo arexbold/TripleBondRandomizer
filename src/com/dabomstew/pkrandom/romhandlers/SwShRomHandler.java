@@ -1901,7 +1901,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         // Nincada will still produce an "extra" Pokemon like in older generations.
         int offset = find(main, SwShConstants.ninjaskSpeciesLocator);
         if (offset > 0) {
-            int patchedInstruction = createCmpInstruction(0, primaryEvolution.number, false);
+            int patchedInstruction = createCmpInstruction(0, primaryEvolution.getBaseNumber(), false);
             FileFunctions.writeFullInt(main, offset, patchedInstruction);
         }
 
