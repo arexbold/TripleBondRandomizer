@@ -32,6 +32,8 @@ public class SwShConstants {
 
     public static final int duplicateTrade = 9;
 
+    public static final String ninjaskSpeciesLocator = "1F8C047141", shedinjaLocator = "81248052E00313AAE2";
+
     public static final Type[] typeTable = constructTypeTable();
 
     private static Type[] constructTypeTable() {

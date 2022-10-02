@@ -3,10 +3,7 @@ package com.dabomstew.pkrandom.romhandlers;
 import com.dabomstew.pkrandom.FileFunctions;
 import com.dabomstew.pkrandom.RomFunctions;
 import com.dabomstew.pkrandom.Settings;
-import com.dabomstew.pkrandom.constants.GlobalConstants;
-import com.dabomstew.pkrandom.constants.Moves;
-import com.dabomstew.pkrandom.constants.Species;
-import com.dabomstew.pkrandom.constants.SwShConstants;
+import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
 import com.dabomstew.pkrandom.hac.GFPack;
@@ -197,6 +194,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     // This ROM
     private RomEntry romEntry;
+    private byte[] main;
     private Map<Integer,Pokemon> pokes;
     private Map<Integer,Map<Integer,Integer>> absolutePokeNumByBaseForme;
     private Map<Integer,Integer> dummyAbsolutePokeNums;
@@ -1315,7 +1313,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public String getSupportLevel() {
-        return "None";
+        return "Partial";
     }
 
     @Override
@@ -1356,9 +1354,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     protected void loadedROM(String filename) {
         try {
-            byte[] main = this.readMain();
-            byte[] test = this.readFile("bin/appli/autosave/bin/autosave_00.arc");
-            this.romEntry = entryFor(FileFunctions.getCRC32(main));
+            main = this.readMain();
+            romEntry = entryFor(FileFunctions.getCRC32(main));
 
             loadPokemonStats();
             loadMoves();
@@ -1623,7 +1620,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 }
 
                 // Nincada's Shedinja evo is hardcoded into the game's executable,
-                // so if the Pokemon is Nincada, then let's and put it as one of its evolutions
+                // so if the Pokemon is Nincada, then let's put it as one of its evolutions
                 if (pk.number == Species.nincada) {
                     Pokemon shedinja = pokes.get(Species.shedinja);
                     Evolution evol = new Evolution(pk, shedinja, false, EvolutionType.LEVEL_IS_EXTRA, 20);
@@ -1776,6 +1773,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     protected void savingROM() throws IOException {
         savePokemonStats();
         saveMoves();
+        writeMain(main);
     }
 
     private void savePokemonStats() {
@@ -1840,10 +1838,9 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
                 Pokemon pk = pokeEntry.getValue();
                 byte[] evoEntry = readFile(String.format(romEntry.getString("EvolutionEntryTemplate"),pokeEntry.getKey()));
-                // TODO shedinja bullshit
-//                if (pk.number == Species.nincada) {
-//                    writeShedinjaEvolution();
-//                }
+                if (pk.number == Species.nincada) {
+                    writeShedinjaEvolution();
+                }
                 int evosWritten = 0;
                 for (Evolution evo : pk.evolutionsFrom) {
                     Pokemon toPK = evo.to;
@@ -1881,6 +1878,53 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
+    }
+
+    // TODO: Fix issue where mods to "main" literally don't work in certain emulators (and maybe real hardware).
+    private void writeShedinjaEvolution() {
+        Pokemon nincada = pokes.get(Species.nincada);
+
+        // When the "Limit Pokemon" setting is enabled and Gen 3 is disabled, or when
+        // "Random Every Level" evolutions are selected, we end up clearing out Nincada's
+        // vanilla evolutions. In that case, there's no point in even worrying about
+        // Shedinja, so just return.
+        if (nincada.evolutionsFrom.size() < 2) {
+            return;
+        }
+        Pokemon primaryEvolution = nincada.evolutionsFrom.get(0).to;
+        Pokemon extraEvolution = nincada.evolutionsFrom.get(1).to;
+
+        // In the game's executable, there's a hardcoded check to see if the Pokemon
+        // that just evolved is now a Ninjask after evolving; if it is, then we start
+        // going down the path of creating a Shedinja. To accomplish this check, they
+        // hardcoded Ninjask's species ID as a constant. We replace this constant
+        // with the species ID of Nincada's new primary evolution; that way, evolving
+        // Nincada will still produce an "extra" Pokemon like in older generations.
+        int offset = find(main, SwShConstants.ninjaskSpeciesLocator);
+        if (offset > 0) {
+            int patchedInstruction = createCmpInstruction(0, primaryEvolution.number, false);
+            FileFunctions.writeFullInt(main, offset, patchedInstruction);
+        }
+
+        // In the game's executable, there's a hardcoded value to indicate what "extra"
+        // Pokemon to create. It produces a Shedinja using the following instructions:
+        // movz w1, #0x124
+        // mov x0, x19
+        // mov w2, wzr
+        // The first instruction loads 0x124 (292 in decimal, which is Shedinja's species ID)
+        // to act as the species ID, and the third instruction loads 0 to act as the forme ID.
+        offset = find(main, SwShConstants.shedinjaLocator);
+        if (offset > 0) {
+            int patchedSpeciesInstruction = createMovzInstruction(1, extraEvolution.number, false);
+            int patchedFormeInstruction = createMovzInstruction(2, extraEvolution.formeNumber, false);
+            FileFunctions.writeFullInt(main, offset, patchedSpeciesInstruction);
+            FileFunctions.writeFullInt(main, offset + 8, patchedFormeInstruction);
+        }
+
+        // Now that we've handled the hardcoded Shedinja evolution, delete it so that
+        // we do *not* handle it in WriteEvolutions
+        nincada.evolutionsFrom.remove(1);
+        extraEvolution.evolutionsTo.remove(0);
     }
 
     private void saveMoves() {
@@ -1942,5 +1986,23 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     protected String getGameVersion() {
         return null;
+    }
+
+    private int find(byte[] data, String hexString) {
+        if (hexString.length() % 2 != 0) {
+            return -3; // error
+        }
+        byte[] searchFor = new byte[hexString.length() / 2];
+        for (int i = 0; i < searchFor.length; i++) {
+            searchFor[i] = (byte) Integer.parseInt(hexString.substring(i * 2, i * 2 + 2), 16);
+        }
+        List<Integer> found = RomFunctions.search(data, searchFor);
+        if (found.size() == 0) {
+            return -1; // not found
+        } else if (found.size() > 1) {
+            return -2; // not unique
+        } else {
+            return found.get(0);
+        }
     }
 }

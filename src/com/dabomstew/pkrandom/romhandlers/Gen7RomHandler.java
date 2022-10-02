@@ -603,7 +603,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                 }
 
                 // Nincada's Shedinja evo is hardcoded into the game's executable,
-                // so if the Pokemon is Nincada, then let's and put it as one of its evolutions
+                // so if the Pokemon is Nincada, then let's put it as one of its evolutions
                 if (pk.number == Species.nincada) {
                     Pokemon shedinja = pokes[Species.shedinja];
                     Evolution evol = new Evolution(pk, shedinja, false, EvolutionType.LEVEL_IS_EXTRA, 20);

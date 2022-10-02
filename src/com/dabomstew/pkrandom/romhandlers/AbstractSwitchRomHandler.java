@@ -147,4 +147,24 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
     protected void writeFile(String location, byte[] data) throws IOException {
         fileReader.writeFile(location, data);
     }
+
+    protected int createCmpInstruction(int register, int immediate, boolean is64Bit) {
+        long instruction = 0x7100001F;
+        if (is64Bit) {
+            instruction |= 0x80000000;
+        }
+        instruction |= ((register & 0x1F) << 5);
+        instruction |= ((immediate & 0xFFF) << 10);
+        return (int)instruction;
+    }
+
+    protected int createMovzInstruction(int register, int immediate, boolean is64Bit) {
+        long instruction = 0x52800000;
+        if (is64Bit) {
+            instruction |= 0x80000000;
+        }
+        instruction |= (register & 0x1F);
+        instruction |= ((immediate & 0xFFFF) << 5);
+        return (int)instruction;
+    }
 }
