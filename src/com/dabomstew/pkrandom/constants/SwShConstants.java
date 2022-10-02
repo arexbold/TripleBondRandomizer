@@ -1,10 +1,13 @@
 package com.dabomstew.pkrandom.constants;
 
+import com.dabomstew.pkrandom.pokemon.ItemList;
 import com.dabomstew.pkrandom.pokemon.MoveCategory;
 import com.dabomstew.pkrandom.pokemon.Trainer;
 import com.dabomstew.pkrandom.pokemon.Type;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class SwShConstants {
     public static final int pokemonCount = 898; // includes unused pokemon
@@ -31,6 +34,10 @@ public class SwShConstants {
     public static final int learnsetEntrySize = 0x104;
 
     public static final int duplicateTrade = 9;
+
+    public static final int tmCount = 100, tmBlockOneCount = 92, tmBlockTwoCount = 3, tmBlockThreeCount = 4,
+            tmBlockFourCount = 1, tmBlockOneOffset = Items.tm01, tmBlockTwoOffset = Items.tm93,
+            tmBlockThreeOffset = Items.tm96, tmBlockFourOffset = Items.tm00;
 
     public static final String ninjaskSpeciesLocator = "1F8C047141", shedinjaLocator = "81248052E00313AAE2";
 
@@ -843,5 +850,191 @@ public class SwShConstants {
         allTrainers.get(378 - 1).forceStarterPosition = 3;
         allTrainers.get(379 - 1).forceStarterPosition = 3;
         allTrainers.get(380 - 1).forceStarterPosition = 3;
+    }
+
+    public static final long noItemHash = 0xCBF29CE484222645L;
+
+    public static ItemList allowedItems, nonBadItems;
+    public static List<Integer> regularShopItems, opShopItems;
+    public static final List<Integer> bannedItems = Arrays.asList(Items.expCandyM, Items.expCandyL,
+            Items.expCandyXL);
+
+    static {
+        setupAllowedItems();
+    }
+
+    private static void setupAllowedItems() {
+        allowedItems = new ItemList(Items.reinsofUnity);
+        // Key items + version exclusives
+        allowedItems.banRange(Items.explorerKit, 57);
+        allowedItems.banRange(Items.dataCard01, 32);
+        allowedItems.banRange(Items.xtransceiverMale, 7);
+        allowedItems.banSingles(Items.expShare, Items.libertyPass, Items.propCase, Items.dragonSkull,
+                Items.lightStone, Items.darkStone);
+        // Unknown blank items or version exclusives
+        allowedItems.banRange(Items.tea, 3);
+        allowedItems.banRange(Items.unused120, 14);
+
+        // Items that were removed in Sw/Sh
+        allowedItems.banSingles(Items.sacredAsh);
+        allowedItems.banRange(Items.fluffyTail, 12);
+        allowedItems.banSingles(Items.heartScale);
+        allowedItems.banRange(Items.growthMulch, 11);
+        allowedItems.banSingles(Items.oddKeystone);
+        allowedItems.banRange(Items.mail1, 12);
+        allowedItems.banRange(Items.razzBerry, 5);
+        allowedItems.banRange(Items.cornnBerry, 9);
+        allowedItems.banSingles(Items.expShare);
+        allowedItems.banRange(Items.deepSeaTooth, 2);
+        allowedItems.banSingles(Items.luckyPunch);
+        allowedItems.banRange(Items.redScarf, 5);
+        allowedItems.banSingles(Items.razorFang);
+        allowedItems.banRange(Items.photoAlbum, 3);
+        allowedItems.banRange(Items.fireGem, 17);
+        allowedItems.banRange(Items.coverFossil, 4);
+        allowedItems.banRange(Items.pokeToy, 3);
+        allowedItems.banRange(Items.relicCopper, 7);
+        allowedItems.banRange(Items.direHit2, 26);
+        allowedItems.banSingles(Items.permit);
+        allowedItems.banRange(Items.plasmaCard, 5);
+        allowedItems.banRange(Items.pokeFlute, 35);
+        allowedItems.banSingles(Items.tm100);
+        allowedItems.banRange(Items.redNectar, 4);
+
+        // TMs & HMs - tms cant be held in gen7
+        allowedItems.tmRange(Items.tm01, 92);
+        allowedItems.tmRange(Items.tm93, 3);
+        allowedItems.banRange(Items.tm01, 100);
+        allowedItems.banRange(Items.tm93, 3);
+        // Battle Launcher exclusives
+        allowedItems.banRange(Items.direHit2, 24);
+
+
+        // Key items (Gen 6)
+        allowedItems.banRange(Items.holoCasterMale,3);
+        allowedItems.banSingles(Items.sprinklotad);
+        allowedItems.banRange(Items.powerPlantPass,13);
+        allowedItems.banRange(Items.elevatorKey,4);
+        allowedItems.banRange(Items.lensCase,3);
+        allowedItems.banRange(Items.lookerTicket,3);
+        allowedItems.banRange(Items.megaCharm,2);
+
+        // TMs (Gen 6)
+        allowedItems.tmRange(Items.tm96,5);
+        allowedItems.banRange(Items.tm96,5);
+
+        // Gen 6/7 key items, Z-Crystals
+        allowedItems.banRange(Items.jawFossil,85);
+        allowedItems.banRange(Items.zRing, 49);
+
+        // Key Items (Gen 7)
+        allowedItems.banSingles(Items.zRing, Items.sparklingStone, Items.zygardeCube, Items.ridePager,
+                Items.sunFlute, Items.moonFlute, Items.enigmaticCard);
+        allowedItems.banRange(Items.forageBag,3);
+
+        // Unused
+        allowedItems.banSingles(Items.unused848, Items.unused859);
+        allowedItems.banRange(Items.unused837,4);
+        allowedItems.banRange(Items.silverRazzBerry,18);
+        allowedItems.banRange(Items.stretchySpring,18);
+
+        // Z-Crystals
+        allowedItems.banRange(Items.solganiumZBag,12);
+
+        // Key Items
+        allowedItems.banRange(Items.zPowerRing,16);
+
+        // ROTO LOTO
+        allowedItems.banRange(Items.rotoHatch,11);
+
+        // Candy, unused items
+        allowedItems.banRange(Items.healthCandy, 114);
+
+        // Gen 8 Key items, unused items
+        allowedItems.banRange(Items.endorsement, 10);
+        allowedItems.banRange(Items.campingGear, 3);
+        allowedItems.banSingles(Items.hiTechEarbuds);
+        allowedItems.banRange(Items.wishingChip, 14);
+        allowedItems.banRange(Items.styleCard, 5);
+        allowedItems.banRange(Items.markCharm, 3);
+        allowedItems.banRange(Items.legendaryClue1, 11);
+        allowedItems.banSingles(Items.carrotSeeds, Items.reinsofUnity);
+
+        // TRs and TM 00
+        allowedItems.tmRange(Items.tm00, 1);
+        allowedItems.banSingles(Items.tm00);
+
+        // non-bad items
+        // ban specific pokemon hold items, berries, apricorns, mail
+        nonBadItems = allowedItems.copy();
+
+        nonBadItems.banSingles(Items.oddKeystone, Items.griseousOrb, Items.soulDew, Items.lightBall,
+                Items.oranBerry, Items.quickPowder, Items.passOrb, Items.discountCoupon, Items.strangeSouvenir,
+                Items.festivalTicket, Items.galaricaTwig);
+        nonBadItems.banRange(Items.growthMulch, 4); // mulch
+        nonBadItems.banRange(Items.adamantOrb, 2); // orbs
+        nonBadItems.banRange(Items.mail1, 12); // mails
+        nonBadItems.banRange(Items.figyBerry, 25); // berries without useful battle effects
+        nonBadItems.banRange(Items.luckyPunch, 4); // pokemon specific
+        nonBadItems.banRange(Items.redScarf, 5); // contest scarves
+        nonBadItems.banRange(Items.richMulch,4); // more mulch
+        nonBadItems.banRange(Items.gengarite, 30); // Mega Stones, part 1
+        nonBadItems.banRange(Items.swampertite, 13); // Mega Stones, part 2
+        nonBadItems.banRange(Items.cameruptite, 4); // Mega Stones, part 3
+        nonBadItems.banRange(Items.fightingMemory,17); // Memories
+        nonBadItems.banRange(Items.relicCopper,7); // relic items
+        nonBadItems.banSingles(Items.shoalSalt, Items.shoalShell); // Shoal items; have no purpose and sell for $10.
+        nonBadItems.banRange(Items.blueFlute, 5); // Flutes; have no purpose and sell for $10.
+        nonBadItems.banRange(Items.starAnd458, 300); // Dynamax crystals
+        nonBadItems.banRange(Items.redApricorn, 7); // Apricorns
+        nonBadItems.banRange(Items.sausages, 16); // Curry items
+        nonBadItems.banRange(Items.fruitBunch, 9); // Curry items
+
+        regularShopItems = new ArrayList<>();
+
+        regularShopItems.addAll(IntStream.rangeClosed(Items.ultraBall, Items.pokeBall).boxed().collect(Collectors.toList()));
+        regularShopItems.addAll(IntStream.rangeClosed(Items.potion, Items.revive).boxed().collect(Collectors.toList()));
+        regularShopItems.addAll(IntStream.rangeClosed(Items.superRepel, Items.repel).boxed().collect(Collectors.toList()));
+        regularShopItems.add(Items.pokeDoll);
+
+        opShopItems = new ArrayList<>();
+
+        // "Money items" etc
+        opShopItems.add(Items.lavaCookie);
+        opShopItems.add(Items.berryJuice);
+        opShopItems.add(Items.rareCandy);
+        opShopItems.add(Items.oldGateau);
+        opShopItems.addAll(IntStream.rangeClosed(Items.tinyMushroom, Items.nugget).boxed().collect(Collectors.toList()));
+        opShopItems.add(Items.rareBone);
+        opShopItems.addAll(IntStream.rangeClosed(Items.lansatBerry, Items.rowapBerry).boxed().collect(Collectors.toList()));
+        opShopItems.add(Items.luckyEgg);
+        opShopItems.add(Items.prettyFeather);
+        opShopItems.addAll(IntStream.rangeClosed(Items.balmMushroom, Items.casteliacone).boxed().collect(Collectors.toList()));
+    }
+
+    public static final List<Integer> requiredFieldTMs = Arrays.asList(
+            26, 51, 64, 22, 58, 84, 95, 81, 39, 75, 73, 65, 98, 93, 53, 49, 29, 30, 15, 74, 57, 69, 56, 24, 43, 96, 21, 2, 54, 37, 7, 11, 97,
+            31, 82, 86
+    );
+
+    public static final List<Integer> evolutionItems = Arrays.asList(Items.sunStone, Items.moonStone, Items.fireStone,
+            Items.thunderStone, Items.waterStone, Items.leafStone, Items.shinyStone, Items.duskStone, Items.dawnStone,
+            Items.ovalStone, Items.kingsRock, Items.deepSeaTooth, Items.deepSeaScale, Items.metalCoat, Items.dragonScale,
+            Items.upgrade, Items.protector, Items.electirizer, Items.magmarizer, Items.dubiousDisc, Items.reaperCloth,
+            Items.razorClaw, Items.razorFang, Items.prismScale, Items.whippedDream, Items.sachet, Items.iceStone);
+
+    public static final List<List<Integer>> duplicateEvolutionItems = setupDuplicateEvolutionItems();
+
+    private static List<List<Integer>> setupDuplicateEvolutionItems() {
+        List<List<Integer>> duplicateEvolutionItems = new ArrayList<>();
+
+        List<Integer> sweetsList = Arrays.asList(Items.strawberrySweet, Items.loveSweet, Items.berrySweet,
+                Items.cloverSweet, Items.flowerSweet, Items.starSweet, Items.ribbonSweet);
+        List<Integer> potsList = Arrays.asList(Items.crackedPot, Items.chippedPot);
+
+        duplicateEvolutionItems.add(sweetsList);
+        duplicateEvolutionItems.add(potsList);
+
+        return duplicateEvolutionItems;
     }
 }

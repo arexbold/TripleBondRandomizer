@@ -70,11 +70,11 @@ table SwShPlacementAreaUnknownTiny {
 table SwShPlacementZone {
     meta:SwShPlacementZoneMeta;
     field_01:uint;
-    field_02:uint;
+    critters:[SwShPlacementSpeciesHolder];
     field_03:uint;
     field_04:uint;
     field_05:uint;
-    field_items:[SwShPlacementZoneFieldItemHolder];
+    field_items:[SwShPlacementFieldItemHolder];
     field_07:uint;
     field_08:uint;
     field_09:uint;
@@ -84,9 +84,10 @@ table SwShPlacementZone {
     field_0d:uint;
     field_0e:uint;
     field_0f:uint;
+    field_10:uint;
     field_11:uint;
     field_12:uint;
-    field_13:uint;
+    hidden_items:[SwShPlacementHiddenItemHolder];
     field_14:uint;
     field_15:uint;
     field_16:uint;
@@ -94,7 +95,7 @@ table SwShPlacementZone {
     field_18:uint;
     field_19:uint;
     field_1a:uint;
-    static_objects:[SwShPlacementZoneStaticObjectsHolder];
+    static_objects:[SwShPlacementStaticObjectsHolder];
     field_1c:uint;
 }
 
@@ -132,48 +133,90 @@ table SwShPlacementZoneMetaTripleXYZ {
     hash_11:ulong;
 }
 
-table SwShPlacementZoneFieldItemHolder {
-    field_00:SwShPlacementZoneFieldItem;
+table SwShPlacementSpeciesHolder {
+    field_00:uint;
+    field_01:uint;
+    species:uint;
+    form:uint;
+    gender:uint;
+    shiny:uint;
+    unused2:uint;
+    hash_07:ulong;
+    hash_08:ulong;
+    hash_09:ulong;
+    field_10:[uint];
+    field_11:float;
+    field_12:uint;
+    field_13:int;
+    field_14:int;
+    num_15:ubyte;
 }
 
-table SwShPlacementZoneFieldItem {
+table SwShPlacementFieldItemHolder {
+    field_item:SwShPlacementFieldItem;
+}
+
+table SwShPlacementFieldItem {
     field_00:SwShPlacementZoneMetaTripleXYZ;
     hash_01:ulong;
-    field_02:string;
+    model:string;
     field_03:float;
     field_04:float;
     hash_05:ulong;
-    flags:[ulong];
-    items:[uint];
-    quantity:byte;
+    item_hashes:[ulong];
+    item_counts:[uint];
+    unknown_flag:byte;
     field_09:uint;
 }
 
-table SwShPlacementZoneFieldItemA {
+table SwShPlacementFieldItemA {
     field_00:bool;
     field_01:SwShFlatDummyObject;
 }
 
-table SwShFlatDummyObject {
-    field_00:ubyte;
+table SwShPlacementHiddenItemHolder {
+    hidden_item:SwShPlacementHiddenItem;
 }
 
-table SwShPlacementZoneStaticObjectsHolder {
-    object:[SwShPlacementZoneStaticObject];
+table SwShPlacementHiddenItem {
+    field_00:SwShPlacementZoneMetaTripleXYZ;
+    field_01:SwShPlacementHiddenItemMisc;
+    items:[SwShPlacementHiddenItemData];
+    field_03:int;
+    field_04:uint;
+    field_05:float;
 }
 
-table SwShPlacementZoneStaticObject {
-    identifier:SwShPlacementZoneStaticObjectIdentifier;
+table SwShPlacementHiddenItemMisc {
+    field_00:int;
+    field_01:float;
+    field_02:float;
+    field_03:float;
+    field_04:float;
+}
+
+table SwShPlacementHiddenItemData {
+    item_hash:ulong;
+    chance:int;
+    item_count:int;
+}
+
+table SwShPlacementStaticObjectsHolder {
+    object:[SwShPlacementStaticObject];
+}
+
+table SwShPlacementStaticObject {
+    identifier:SwShPlacementStaticObjectIdentifier;
     field_01:uint;
     field_02:uint;
     field_03:uint;
     field_04:ubyte;
-    spawns:[SwShPlacementZoneStaticObjectSpawn];
-    field_06:SwShPlacementZoneStaticObjectUnknown;
-    field_07:SwShPlacementZoneStaticObjectUnknown;
+    spawns:[SwShPlacementStaticObjectSpawn];
+    field_06:SwShPlacementStaticObjectUnknown;
+    field_07:SwShPlacementStaticObjectUnknown;
 }
 
-table SwShPlacementZoneStaticObjectIdentifier {
+table SwShPlacementStaticObjectIdentifier {
     location_x:float;
     location_y:float;
     location_z:float;
@@ -188,20 +231,24 @@ table SwShPlacementZoneStaticObjectIdentifier {
     field_b:ulong;
 }
 
-table SwShPlacementZoneStaticObjectSpawn {
+table SwShPlacementStaticObjectSpawn {
     spawn_id:ulong;
     description:string;
     field_02:ulong;
     field_03:uint;
-    field_04:SwShPlacementZoneStaticObjectUnknown;
+    field_04:SwShPlacementStaticObjectUnknown;
 }
 
-table SwShPlacementZoneStaticObjectUnknown {
+table SwShPlacementStaticObjectUnknown {
     field_0:uint;
     field_1:uint;
     field_2:uint;
     field_3:uint;
     field_4:float;
+}
+
+table SwShFlatDummyObject {
+    field_00:ubyte;
 }
 
 root_type SwShPlacementAreaArchive;

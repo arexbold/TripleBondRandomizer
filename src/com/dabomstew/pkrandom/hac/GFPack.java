@@ -186,7 +186,7 @@ public class GFPack {
         decompressedFiles[index] = data;
     }
 
-    private int getIndexFileName(String name) {
+    public int getIndexFileName(String name) {
         for (FileHashFolder hf: hashInFolder) {
             int index = hf.getIndexFileName(name);
             if (index >= 0) {

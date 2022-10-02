@@ -6,6 +6,7 @@ import com.dabomstew.pkrandom.Settings;
 import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
+import com.dabomstew.pkrandom.hac.AHTB;
 import com.dabomstew.pkrandom.hac.GFPack;
 import com.dabomstew.pkrandom.hac.SwitchFileReader;
 import com.dabomstew.pkrandom.pokemon.*;
@@ -202,6 +203,10 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     private List<Pokemon> pokemonListInclFormes;
     private List<String> abilityNames, itemNames;
     private Move[] moves;
+    private Map<Long,Integer> itemHashToIndex;
+    private List<Long> itemIndexToHash;
+    private GFPack placementPack;
+    private AHTB placementAreaTable;
 
     @Override
     public boolean isRomValid() {
@@ -968,7 +973,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public int getTMCount() {
-        return 0;
+        return 100;
     }
 
     @Override
@@ -1066,32 +1071,44 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public ItemList getAllowedItems() {
-        return null;
+        ItemList allowedItems = SwShConstants.allowedItems.copy();
+        for (int bannedItem: SwShConstants.bannedItems) {
+            allowedItems.banSingles(bannedItem);
+        }
+        return allowedItems;
     }
 
     @Override
     public ItemList getNonBadItems() {
-        return null;
+        ItemList nonBadItems = SwShConstants.nonBadItems.copy();
+        for (int bannedItem: SwShConstants.bannedItems) {
+            nonBadItems.banSingles(bannedItem);
+        }
+        return nonBadItems;
     }
 
     @Override
     public List<Integer> getEvolutionItems() {
-        return null;
+        List<Integer> evolutionItems = SwShConstants.evolutionItems;
+        for (List<Integer> dupes: SwShConstants.duplicateEvolutionItems) {
+            evolutionItems.add(dupes.get(this.random.nextInt(dupes.size())));
+        }
+        return evolutionItems;
     }
 
     @Override
     public List<Integer> getUniqueNoSellItems() {
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
     public List<Integer> getRegularShopItems() {
-        return null;
+        return SwShConstants.regularShopItems;
     }
 
     @Override
     public List<Integer> getOPShopItems() {
-        return null;
+        return SwShConstants.opShopItems;
     }
 
     @Override
@@ -1101,27 +1118,108 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Integer> getRequiredFieldTMs() {
-        return null;
+        return SwShConstants.requiredFieldTMs;
+    }
+
+    private int tmFromIndex(int index) {
+
+        if (index >= SwShConstants.tmBlockOneOffset
+                && index < SwShConstants.tmBlockOneOffset + SwShConstants.tmBlockOneCount) {
+            return index - (SwShConstants.tmBlockOneOffset - 1);
+        } else if (index >= SwShConstants.tmBlockTwoOffset
+                && index < SwShConstants.tmBlockTwoOffset + SwShConstants.tmBlockTwoCount) {
+            return (index + SwShConstants.tmBlockOneCount) - (SwShConstants.tmBlockTwoOffset - 1);
+        } else if (index >= SwShConstants.tmBlockThreeOffset
+                && index < SwShConstants.tmBlockThreeOffset + SwShConstants.tmBlockThreeCount) {
+            return (index + SwShConstants.tmBlockOneCount + SwShConstants.tmBlockTwoCount) - (SwShConstants.tmBlockThreeOffset - 1);
+        } else {
+            return 0;   // TM00
+        }
+    }
+
+    private int indexFromTM(int tm) {
+        if (tm >= 1 && tm <= SwShConstants.tmBlockOneCount) {
+            return tm + (SwShConstants.tmBlockOneOffset - 1);
+        } else if (tm > SwShConstants.tmBlockOneCount && tm <= SwShConstants.tmBlockOneCount + SwShConstants.tmBlockTwoCount) {
+            return tm + (SwShConstants.tmBlockTwoOffset - 1 - SwShConstants.tmBlockOneCount);
+        } else if (tm > SwShConstants.tmBlockOneCount + SwShConstants.tmBlockTwoCount && tm <= SwShConstants.tmBlockOneCount + SwShConstants.tmBlockTwoCount + SwShConstants.tmBlockThreeCount) {
+            return tm + (SwShConstants.tmBlockThreeOffset - 1 - (SwShConstants.tmBlockOneCount + SwShConstants.tmBlockTwoCount));
+        } else {
+            return SwShConstants.tmBlockFourOffset;
+        }
     }
 
     @Override
     public List<Integer> getCurrentFieldTMs() {
-        return null;
+        List<Integer> fieldItems = this.getFieldItems();
+        List<Integer> fieldTMs = new ArrayList<>();
+
+        ItemList allowedItems = SwShConstants.allowedItems;
+        for (int item : fieldItems) {
+            if (allowedItems.isTM(item)) {
+                fieldTMs.add(tmFromIndex(item));
+            }
+        }
+
+        return fieldTMs.stream().distinct().collect(Collectors.toList());
     }
 
     @Override
     public void setFieldTMs(List<Integer> fieldTMs) {
+        List<Integer> fieldItems = this.getFieldItems();
+        int fiLength = fieldItems.size();
+        Iterator<Integer> iterTMs = fieldTMs.iterator();
+        Map<Integer,Integer> tmMap = new HashMap<>();
 
+        ItemList allowedItems = SwShConstants.allowedItems;
+        for (int i = 0; i < fiLength; i++) {
+            int oldItem = fieldItems.get(i);
+            if (allowedItems.isTM(oldItem)) {
+                if (tmMap.get(oldItem) != null) {
+                    fieldItems.set(i,tmMap.get(oldItem));
+                    continue;
+                }
+                int newItem = indexFromTM(iterTMs.next());
+                fieldItems.set(i, newItem);
+                tmMap.put(oldItem,newItem);
+            }
+        }
+
+        this.setFieldItems(fieldItems);
     }
 
     @Override
     public List<Integer> getRegularFieldItems() {
-        return null;
+
+        List<Integer> fieldItems = this.getFieldItems();
+        List<Integer> fieldRegItems = new ArrayList<>();
+
+        ItemList allowedItems = SwShConstants.allowedItems;
+        for (int item : fieldItems) {
+            if (allowedItems.isAllowed(item) && !(allowedItems.isTM(item))) {
+                fieldRegItems.add(item);
+            }
+        }
+
+        return fieldRegItems;
     }
 
     @Override
     public void setRegularFieldItems(List<Integer> items) {
+        List<Integer> fieldItems = this.getFieldItems();
+        int fiLength = fieldItems.size();
+        Iterator<Integer> iterNewItems = items.iterator();
 
+        ItemList allowedItems = SwShConstants.allowedItems;
+        for (int i = 0; i < fiLength; i++) {
+            int oldItem = fieldItems.get(i);
+            if (!(allowedItems.isTM(oldItem)) && allowedItems.isAllowed(oldItem)) {
+                int newItem = iterNewItems.next();
+                fieldItems.set(i, newItem);
+            }
+        }
+
+        this.setFieldItems(fieldItems);
     }
 
     @Override
@@ -1142,6 +1240,83 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public void setShopPrices() {
 
+    }
+
+    public List<Integer> getFieldItems() {
+        List<Integer> fieldItems = new ArrayList<>();
+
+        for (String areaName: placementAreaTable.map.values()) {
+            if (placementPack.getIndexFileName(areaName + ".bin") < 0) {
+                continue;
+            }
+            byte[] areaData = placementPack.getDataFileName(areaName + ".bin");
+            SwShPlacementAreaArchive arc =
+                    SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(areaData));
+
+            for (int i = 0; i < arc.placementZonesLength(); i++) {
+                SwShPlacementZone zone = arc.placementZones(i);
+                for (int j = 0; j < zone.fieldItemsLength(); j++) {
+                    SwShPlacementFieldItem fldItem = zone.fieldItems(j).fieldItem();
+                    for (int k = 0; k < fldItem.itemHashesLength(); k++) {
+                        long hash = fldItem.itemHashes(k);
+                        if (hash == SwShConstants.noItemHash) {
+                            break;
+                        }
+                        int index = itemHashToIndex.get(hash);
+                        fieldItems.add(index);
+                    }
+                }
+                for (int j = 0; j < zone.hiddenItemsLength(); j++) {
+                    SwShPlacementHiddenItem hiddenItem = zone.hiddenItems(j).hiddenItem();
+                    for (int k = 0; k < hiddenItem.itemsLength(); k++) {
+                        long hash = hiddenItem.items(k).itemHash();
+                        if (hash == SwShConstants.noItemHash) {
+                            break;
+                        }
+                        int index = itemHashToIndex.get(hash);
+                        fieldItems.add(index);
+                    }
+                }
+            }
+        }
+        return fieldItems;
+    }
+
+    public void setFieldItems(List<Integer> items) {
+        Iterator<Integer> iterItems = items.iterator();
+        for (String areaName: placementAreaTable.map.values()) {
+            if (placementPack.getIndexFileName(areaName + ".bin") < 0) {
+                continue;
+            }
+            byte[] areaData = placementPack.getDataFileName(areaName + ".bin");
+            SwShPlacementAreaArchive arc =
+                    SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(areaData));
+
+            for (int i = 0; i < arc.placementZonesLength(); i++) {
+                SwShPlacementZone zone = arc.placementZones(i);
+                for (int j = 0; j < zone.fieldItemsLength(); j++) {
+                    SwShPlacementFieldItem fldItem = zone.fieldItems(j).fieldItem();
+                    for (int k = 0; k < fldItem.itemHashesLength(); k++) {
+                        long hash = fldItem.itemHashes(k);
+                        if (hash == SwShConstants.noItemHash) {
+                            break;
+                        }
+                        fldItem.mutateItemHashes(k, itemIndexToHash.get(iterItems.next()));
+                    }
+                }
+                for (int j = 0; j < zone.hiddenItemsLength(); j++) {
+                    SwShPlacementHiddenItem hiddenItem = zone.hiddenItems(j).hiddenItem();
+                    for (int k = 0; k < hiddenItem.itemsLength(); k++) {
+                        long hash = hiddenItem.items(k).itemHash();
+                        if (hash == SwShConstants.noItemHash) {
+                            break;
+                        }
+                        hiddenItem.items(k).mutateItemHash(itemIndexToHash.get(iterItems.next()));
+                    }
+                }
+            }
+            placementPack.setDataFileName(areaName + ".bin", arc.getByteBuffer().array());
+        }
     }
 
     @Override
@@ -1359,6 +1534,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
             loadPokemonStats();
             loadMoves();
+            loadPlacement();
 
             pokemonListInclFormes = new ArrayList<>(pokes.values());
             pokemonListInclFormes.add(0,null);  // For compatibility with AbstractRomHandler; this will be removed later
@@ -1369,6 +1545,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
             abilityNames = getStrings(romEntry.getString("AbilityNames"));
             itemNames = getStrings(romEntry.getString("ItemNames"));
+            setupItemHashes();
+            getFieldItems();
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -1769,10 +1947,41 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
+    private void setupItemHashes() {
+        try {
+            byte[] itemHashToIndexData = readFile(romEntry.getString("ItemHashToIndex"));
+            itemHashToIndex = new HashMap<>();
+            itemIndexToHash = new ArrayList<>();
+            int itemCount = FileFunctions.read2ByteInt(itemHashToIndexData, 0);
+            for (int i = 0; i < itemCount; i++) {
+                long hash = FileFunctions.readFullLong(itemHashToIndexData, i * 0x10 + 4);
+                int index = FileFunctions.read2ByteInt(itemHashToIndexData, i * 0x10 + 0xC);
+                if (index == 0) {
+                    System.out.println(i);
+                }
+                itemHashToIndex.put(hash,index);
+                itemIndexToHash.add(hash);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
+    private void loadPlacement() {
+        try {
+            byte[] placementData = readFile(romEntry.getString("Placement"));
+            placementPack = new GFPack(placementData);
+            placementAreaTable = new AHTB(placementPack.getDataFileName("AreaNameHashTable.tbl"));
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
     @Override
     protected void savingROM() throws IOException {
         savePokemonStats();
         saveMoves();
+        savePlacement();
         writeMain(main);
     }
 
@@ -1952,6 +2161,15 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             throw new RandomizerIOException(e);
         }
     }
+
+    private void savePlacement() {
+        try {
+            writeFile(romEntry.getString("Placement"), placementPack.writePack());
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
     private List<String> getStrings(String fileName) throws IOException {
         byte[] rawFile = this.readFile(fileName);
         // TODO handle romType better

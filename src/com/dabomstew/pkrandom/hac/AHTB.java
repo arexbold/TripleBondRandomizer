@@ -2,13 +2,13 @@ package com.dabomstew.pkrandom.hac;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class AHTB {
     private AHTBEntry[] entries;
     private static final int magic = 0x42544841;
-    public Map<Long,String> map = new HashMap<>();
+    public Map<Long,String> map = new TreeMap<>();
 
     public AHTB(byte[] data) {
         ByteBuffer bb = ByteBuffer.wrap(data);
