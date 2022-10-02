@@ -267,11 +267,17 @@ public class SwitchFileReader {
         if (!romfsDir.exists()) {
             romfsDir.mkdirs();
         }
+        String exefsRootPath = layeredFSRootPath + "exefs" + File.separator;
+        File exefsDir = new File(exefsRootPath);
+        if (!exefsDir.exists()) {
+            exefsDir.mkdirs();
+        }
 
         if (mainChanged) {
-            // TODO: Is this what you do with main on Switch? I genuinely don't know
+            // TODO: Need to hopefully find a solution that works across real hardware/Yuzu/Ryujinx
+            // This absolutely works with Ryujinx's "Atmosphere Mods Directory"
             byte[] main = getMain();
-            FileOutputStream fos = new FileOutputStream(new File(layeredFSRootPath + "main"));
+            FileOutputStream fos = new FileOutputStream(new File(exefsRootPath + "main"));
             fos.write(main);
             fos.close();
         }

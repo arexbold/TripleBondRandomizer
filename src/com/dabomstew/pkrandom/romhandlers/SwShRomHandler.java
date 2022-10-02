@@ -1918,7 +1918,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             int patchedSpeciesInstruction = createMovzInstruction(1, extraEvolution.number, false);
             int patchedFormeInstruction = createMovzInstruction(2, extraEvolution.formeNumber, false);
             FileFunctions.writeFullInt(main, offset, patchedSpeciesInstruction);
-            FileFunctions.writeFullInt(main, offset + 8, patchedFormeInstruction);
+            // FileFunctions.writeFullInt(main, offset + 8, patchedFormeInstruction);
         }
 
         // Now that we've handled the hardcoded Shedinja evolution, delete it so that
