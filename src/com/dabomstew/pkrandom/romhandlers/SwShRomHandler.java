@@ -7,6 +7,7 @@ import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
 import com.dabomstew.pkrandom.hac.AHTB;
+import com.dabomstew.pkrandom.hac.AMX;
 import com.dabomstew.pkrandom.hac.GFPack;
 import com.dabomstew.pkrandom.hac.SwitchFileReader;
 import com.dabomstew.pkrandom.pokemon.*;
@@ -207,6 +208,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     private List<Long> itemIndexToHash;
     private GFPack placementPack;
     private AHTB placementAreaTable;
+    private SwShGiftEncounterArchive giftEncounterArchive = null;
 
     @Override
     public boolean isRomValid() {
@@ -284,12 +286,48 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public boolean setStarters(List<Pokemon> newStarters) {
         try {
-            byte[] data = readFile(romEntry.getString("GiftPokemon"));
-            SwShGiftEncounterArchive arc =
-                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            if (giftEncounterArchive == null) {
+                byte[] data = readFile(romEntry.getString("GiftPokemon"));
+                SwShGiftEncounterArchive oldArc =
+                        SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+                byte[] newData = constructNewGiftEncounterArchiveFlatBuffer(oldArc);
+                giftEncounterArchive =
+                        SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(newData));
+            }
             int[] starterGiftIndices = romEntry.arrayEntries.get("StarterGiftIndices");
+            int[] starterPlacementOutsideIndices = romEntry.arrayEntries.get("StarterPlacementOutsideIndices");
+            int[] starterPlacementInsideIndices = romEntry.arrayEntries.get("StarterPlacementInsideIndices");
             Iterator<Pokemon> newStarterIterator = newStarters.iterator();
-            for (int i: starterGiftIndices) {
+
+            byte[] starterPlacementOutsideData = placementPack.getDataFileName("a_0101.bin");
+            byte[] starterPlacementInsideData = placementPack.getDataFileName("a_t0101_i0101.bin");
+
+            // Fix placement vtable to allow forms to be set
+            for (int vTableOffset: romEntry.arrayEntries.get("StarterPlacementOutsideVTableFormOffsets")) {
+                starterPlacementOutsideData[vTableOffset] = 0x3C;
+            }
+            for (int vTableOffset: romEntry.arrayEntries.get("StarterPlacementInsideVTableFormOffsets")) {
+                starterPlacementInsideData[vTableOffset] = 0x3C;
+            }
+
+            SwShPlacementAreaArchive starterPlacementOutsideArea =
+                    SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(starterPlacementOutsideData));
+            SwShPlacementZone starterPlacementZone1 = starterPlacementOutsideArea.placementZones(0);
+            SwShPlacementAreaArchive starterPlacementInsideArea =
+                    SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(starterPlacementInsideData));
+            SwShPlacementZone starterPlacementZone2 = starterPlacementInsideArea.placementZones(0);
+            // TODO look at what this actually changes, and figure out starter cries
+//            byte[] townScript = readFile(
+//                    String.format(
+//                            romEntry.getString("ScriptTemplate"),
+//                            romEntry.getString("PostwickOutdoorZone")));
+//            AMX townAMX = new AMX(townScript);
+//            int[] starterCryScriptOffsets = romEntry.arrayEntries.get("StarterCryScriptOffsets");
+
+            for (int i = 0; i < 3; i++) {
+                int giftIndex = starterGiftIndices[i];
+                int placementOutsideIndex = starterPlacementOutsideIndices[i];
+                int placementInsideIndex = starterPlacementInsideIndices[i];
                 Pokemon starter = newStarterIterator.next();
                 int forme = 0;
                 boolean checkCosmetics = true;
@@ -303,12 +341,24 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 } else if (!checkCosmetics && starter.cosmeticForms > 0) {
                     forme += starter.getCosmeticFormNumber(this.random.nextInt(starter.cosmeticForms));
                 }
-                SwShGiftEncounter starterGift = arc.giftEncounters(i);
+                SwShGiftEncounter starterGift = giftEncounterArchive.giftEncounters(giftIndex);
                 starterGift.mutateSpecies(starter.number);
                 starterGift.mutateForm(forme);
+                starterPlacementZone1.critters(placementOutsideIndex).mutateSpecies(starter.number);
+                starterPlacementZone1.critters(placementOutsideIndex).mutateForm(forme);
+                starterPlacementZone2.critters(placementInsideIndex).mutateSpecies(starter.number);
+                starterPlacementZone2.critters(placementInsideIndex).mutateForm(forme);
+//                FileFunctions.write2ByteInt(townAMX.decData,starterCryScriptOffsets[i],starter.number);
             }
-            byte[] newStarterData = arc.getByteBuffer().array();
+            byte[] newStarterData = giftEncounterArchive.getByteBuffer().array();
             writeFile(romEntry.getString("GiftPokemon"),newStarterData);
+            placementPack.setDataFileName("a_0101.bin",starterPlacementOutsideArea.getByteBuffer().array());
+            placementPack.setDataFileName("a_t0101_i0101.bin",starterPlacementInsideArea.getByteBuffer().array());
+//            writeFile(
+//                    String.format(
+//                            romEntry.getString("ScriptTemplate"),
+//                            romEntry.getString("PostwickOutdoorZone")),
+//                    townAMX.getBytes());
             return true;
         } catch (IOException e) {
             throw new RandomizerIOException(e);
@@ -348,21 +398,110 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public void setStarterHeldItems(List<Integer> items) {
         try {
-            byte[] data = readFile(romEntry.getString("GiftPokemon"));
-            SwShGiftEncounterArchive arc =
-                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            if (giftEncounterArchive == null) {
+                byte[] data = readFile(romEntry.getString("GiftPokemon"));
+                SwShGiftEncounterArchive oldArc =
+                        SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+                byte[] newData = constructNewGiftEncounterArchiveFlatBuffer(oldArc);
+                giftEncounterArchive =
+                        SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(newData));
+            }
             int[] starterGiftIndices = romEntry.arrayEntries.get("StarterGiftIndices");
             Iterator<Integer> itemsIter = items.iterator();
             for (int i: starterGiftIndices) {
                 int item = itemsIter.next();
-                SwShGiftEncounter starterGift = arc.giftEncounters(i);
+                SwShGiftEncounter starterGift = giftEncounterArchive.giftEncounters(i);
                 starterGift.mutateHeldItem(item);
             }
-            byte[] newStarterData = arc.getByteBuffer().array();
+            byte[] newStarterData = giftEncounterArchive.getByteBuffer().array();
             writeFile(romEntry.getString("GiftPokemon"),newStarterData);
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
+    }
+
+    private byte[] constructNewGiftEncounterArchiveFlatBuffer(SwShGiftEncounterArchive arc) {
+        // Need space for root object size (including its vtable), gift encounter vtable, and all gift encounters
+        int sizeRequired = 0x94 + 0x3C + arc.giftEncountersLength() * 0x40;
+        byte[] data = new byte[sizeRequired];
+
+        // The following is the same as in the original flatbuffer
+        data[0] = 0xC;  // Offset to root object
+        data[6] = 6;    // Beginning of root object vtable - vtable size
+        data[8] = 8;    // Root object inline size
+        data[0xA] = 4;  // Offset to gift encounter array within root object
+        data[0xC] = 6;  // Beginning of root object - offset to vtable (negative direction)
+        data[0x10] = 4; // Pointer to gift encounter array
+        FileFunctions.writeFullInt(data,0x14,arc.giftEncountersLength());  // Beginning of gift encounter array - element count
+
+        // Add the offsets to the array objects, as well as the objects themselves
+        for (int i = 0; i < arc.giftEncountersLength(); i++) {
+            // In memory, the array objects are stored in reverse order because Google said so
+            int pointerOffset = 0x18+(i*4);
+            FileFunctions.writeFullInt(data,pointerOffset,(sizeRequired - (i+1) * 0x40) - pointerOffset);
+            addGiftEncounterFlatBufferObject(data,arc.giftEncounters(i),0x94,sizeRequired - (i+1) * 0x40);
+        }
+        // Write vtable
+        addGiftEncounterVTable(data,0x94);
+
+        return data;
+    }
+
+    private void addGiftEncounterVTable(byte[] data, int offset) {
+        FileFunctions.write2ByteInt(data,offset,0x3C);     // VTable length
+        FileFunctions.write2ByteInt(data,offset+2,0x40);     // Object inline length
+        FileFunctions.write2ByteInt(data,offset+4,0x0);      // Is Egg
+        FileFunctions.write2ByteInt(data,offset+6,0x4);      // Form
+        FileFunctions.write2ByteInt(data,offset+8,0x0);      // Dynamax Level
+        FileFunctions.write2ByteInt(data,offset+0xA,0xC);    // Ball Item ID
+        FileFunctions.write2ByteInt(data,offset+0xC,0x0);    // Field 4
+        FileFunctions.write2ByteInt(data,offset+0xE,0x20);   // Hash 1
+        FileFunctions.write2ByteInt(data,offset+0x10,0x3C);   // G-Max Factor
+        FileFunctions.write2ByteInt(data,offset+0x12,0x38);  // Held Item
+        FileFunctions.write2ByteInt(data,offset+0x14,0x5);   // Level
+        FileFunctions.write2ByteInt(data,offset+0x16,0x10);  // Species
+        FileFunctions.write2ByteInt(data,offset+0x18,0x0);   // Field A
+        FileFunctions.write2ByteInt(data,offset+0x1A,0x0);   // Memory Code
+        FileFunctions.write2ByteInt(data,offset+0x1C,0x0);   // Memory Data
+        FileFunctions.write2ByteInt(data,offset+0x1E,0x0);   // Memory Feel
+        FileFunctions.write2ByteInt(data,offset+0x20,0x0);   // Memory Level
+        FileFunctions.write2ByteInt(data,offset+0x22,0x28);  // OT Name ID
+        FileFunctions.write2ByteInt(data,offset+0x24,0x14);  // OT Gender
+        FileFunctions.write2ByteInt(data,offset+0x26,0x18);  // Shiny Lock
+        FileFunctions.write2ByteInt(data,offset+0x28,0x1C);  // Nature
+        FileFunctions.write2ByteInt(data,offset+0x2A,0x0);   // Gender
+        FileFunctions.write2ByteInt(data,offset+0x2C,0x6);   // IV Speed
+        FileFunctions.write2ByteInt(data,offset+0x2E,0x7);   // IV Attack
+        FileFunctions.write2ByteInt(data,offset+0x30,0x8);   // IV Defense
+        FileFunctions.write2ByteInt(data,offset+0x32,0x9);   // IV HP
+        FileFunctions.write2ByteInt(data,offset+0x34,0xA);   // IV Sp.Attack
+        FileFunctions.write2ByteInt(data,offset+0x36,0xB);   // IV Sp.Defense
+        FileFunctions.write2ByteInt(data,offset+0x38,0x30);   // Ability
+        FileFunctions.write2ByteInt(data,offset+0x3A,0x34);   // Special Move
+    }
+
+    private void addGiftEncounterFlatBufferObject(byte[] data, SwShGiftEncounter enc, int vTableAbsOffset,
+                                                  int objectAbsOffset) {
+        FileFunctions.writeFullInt(data,objectAbsOffset,objectAbsOffset - vTableAbsOffset);
+        data[objectAbsOffset+4] = (byte)enc.form();
+        data[objectAbsOffset+5] = (byte)enc.level();
+        data[objectAbsOffset+6] = enc.ivSpe();
+        data[objectAbsOffset+7] = enc.ivAtk();
+        data[objectAbsOffset+8] = enc.ivDef();
+        data[objectAbsOffset+9] = enc.ivHp();
+        data[objectAbsOffset+0xA] = enc.ivSpa();
+        data[objectAbsOffset+0xB] = enc.ivSpd();
+        FileFunctions.writeFullInt(data,objectAbsOffset+0xC,enc.ballItemId());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x10,enc.species());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x14,enc.otGender());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x18,enc.shinyLock());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x1C,enc.nature());
+        FileFunctions.writeFullLong(data,objectAbsOffset+0x20,enc.hash1());
+        FileFunctions.writeFullLong(data,objectAbsOffset+0x28,enc.otNameId());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x30,enc.ability());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x34,enc.specialMove());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x38,enc.heldItem());
+        data[objectAbsOffset+0x3C] = enc.gmaxFactor() ? 1 : (byte)0;
     }
 
     @Override
@@ -1972,6 +2111,22 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             byte[] placementData = readFile(romEntry.getString("Placement"));
             placementPack = new GFPack(placementData);
             placementAreaTable = new AHTB(placementPack.getDataFileName("AreaNameHashTable.tbl"));
+            for (String areaName: placementAreaTable.map.values()) {
+                byte[] thisArea = placementPack.getDataFileName(areaName + ".bin");
+                SwShPlacementAreaArchive arc =
+                        SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(thisArea));
+                for (int i = 0; i < arc.placementZonesLength(); i++) {
+                    SwShPlacementZone thisZone = arc.placementZones(i);
+
+                }
+            }
+//            byte[] townScript = readFile("bin/script/amx/z_t0101_i0101.amx");
+//            AMX townAMX = new AMX(townScript);
+//            byte[] decScript = townAMX.decData;
+//            File decFile = new File("E:\\kod\\universal-pokemon-randomizer\\classes\\artifacts\\rando\\z_t0101_i0101_dec.amx");
+//            RandomAccessFile thisFile = new RandomAccessFile(decFile,"rw");
+//            thisFile.write(decScript);
+//            thisFile.close();
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }

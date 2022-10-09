@@ -1506,7 +1506,9 @@ public class NewRandomizerGUI {
 
         peChangeImpossibleEvosCheckBox.setSelected(settings.isChangeImpossibleEvolutions());
         mdUpdateMovesCheckBox.setSelected(settings.isUpdateMoves());
-        mdUpdateComboBox.setSelectedIndex(Math.max(0,settings.getUpdateMovesToGeneration() - (romHandler.generationOfPokemon()+1)));
+        if (mdUpdateComboBox.isVisible()) {
+            mdUpdateComboBox.setSelectedIndex(Math.max(0,settings.getUpdateMovesToGeneration() - (romHandler.generationOfPokemon()+1)));
+        }
         tpRandomizeTrainerNamesCheckBox.setSelected(settings.isRandomizeTrainerNames());
         tpRandomizeTrainerClassNamesCheckBox.setSelected(settings.isRandomizeTrainerClassNames());
         ptIsDualTypeCheckBox.setSelected(settings.isDualTypeOnly());
@@ -1516,7 +1518,9 @@ public class NewRandomizerGUI {
         pbsUnchangedRadioButton.setSelected(settings.getBaseStatisticsMod() == Settings.BaseStatisticsMod.UNCHANGED);
         pbsFollowEvolutionsCheckBox.setSelected(settings.isBaseStatsFollowEvolutions());
         pbsUpdateBaseStatsCheckBox.setSelected(settings.isUpdateBaseStats());
-        pbsUpdateComboBox.setSelectedIndex(Math.max(0,settings.getUpdateBaseStatsToGeneration() - (Math.max(6,romHandler.generationOfPokemon()+1))));
+        if (pbsUpdateComboBox.isVisible()) {
+            pbsUpdateComboBox.setSelectedIndex(Math.max(0,settings.getUpdateBaseStatsToGeneration() - (Math.max(6,romHandler.generationOfPokemon()+1))));
+        }
         pbsStandardizeEXPCurvesCheckBox.setSelected(settings.isStandardizeEXPCurves());
         pbsLegendariesSlowRadioButton.setSelected(settings.getExpCurveMod() == Settings.ExpCurveMod.LEGENDARIES);
         pbsStrongLegendariesSlowRadioButton.setSelected(settings.getExpCurveMod() == Settings.ExpCurveMod.STRONG_LEGENDARIES);
@@ -2878,6 +2882,7 @@ public class NewRandomizerGUI {
             mdRandomizeMoveCategoryCheckBox.setVisible(romHandler.hasPhysicalSpecialSplit());
             mdUpdateMovesCheckBox.setEnabled(pokemonGeneration < 8);
             mdUpdateMovesCheckBox.setVisible(pokemonGeneration < 8);
+            mdUpdateComboBox.setVisible(pokemonGeneration < 8);
 
             // Pokemon Movesets
             pmsUnchangedRadioButton.setEnabled(true);

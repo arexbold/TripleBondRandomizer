@@ -174,16 +174,14 @@ public class AMX {
     // Modified version of the AMX script compression algorithm from pkNX
     private void compressBytes(ByteBuffer inBuf, ByteArrayOutputStream out) throws IOException {
         List<Byte> bytes = new ArrayList<>();
-        int instructionTemp = inBuf.getInt(inBuf.position());
-        long instruction = Integer.toUnsignedLong(instructionTemp);
-        boolean sign = (instruction & 0x80000000) > 0;
+        long instruction = inBuf.getLong(inBuf.position());
+        boolean sign = (instruction >>> 1 & 0x4000000000000000L) > 0;
 
         // Signed (negative) values are handled opposite of unsigned (positive) values.
         // Positive values are "done" when we've shifted the value down to zero, but
         // we don't need to store the highest 1s in a signed value. We handle this by
         // tracking the loop via a NOTed shadow copy of the instruction if it's signed.
-        int shadowTemp = sign ? ~instructionTemp : instructionTemp;
-        long shadow = Integer.toUnsignedLong(shadowTemp);
+        long shadow = sign ? ~instruction : instruction;
         do
         {
             long least7 = instruction & 0b01111111;
@@ -197,12 +195,12 @@ public class AMX {
 
             bytes.add(byteVal);
 
-            instruction >>= 7;
+            instruction >>>= 7;
             shadow >>= 7;
         }
         while (shadow != 0);
 
-        if (bytes.size() < 5)
+        if (bytes.size() < 10)
         {
             // Ensure "sign bit" (bit just to the right of highest continuation bit) is
             // correct. Add an extra empty continuation byte if we need to. Values can't
@@ -226,7 +224,7 @@ public class AMX {
             ret[i] = bytes.get(i);
         }
 
-        inBuf.position(inBuf.position() + 4);
+        inBuf.position(inBuf.position() + 8);
         out.write(ret);
     }
 }
