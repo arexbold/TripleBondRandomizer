@@ -1,6 +1,7 @@
 package com.dabomstew.pkrandom.romhandlers;
 
 import com.dabomstew.pkrandom.FileFunctions;
+import com.dabomstew.pkrandom.MiscTweak;
 import com.dabomstew.pkrandom.RomFunctions;
 import com.dabomstew.pkrandom.Settings;
 import com.dabomstew.pkrandom.constants.*;
@@ -1613,6 +1614,53 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public List<Integer> getEarlyRequiredHMMoves() {
         return null;
+    }
+
+    @Override
+    public int miscTweaksAvailable() {
+        int available = 0;
+        available |= MiscTweak.RETAIN_ALT_FORMES.getValue();
+        return available;
+    }
+
+    @Override
+    public void applyMiscTweak(MiscTweak tweak) {
+        if (tweak == MiscTweak.RETAIN_ALT_FORMES) {
+            try {
+                patchFormeReversion();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void patchFormeReversion() throws IOException {
+        // Upon loading a save, Darmanitan-Z, Darmanitan-GZ, Aegislash-B, Zygarde-C,
+        // Wishiwashi-S, Eiscue-N, Zacian-C, Zamazenta-C, and Eternatus-E are all
+        // reverted back to their base forme. This patches main such that this
+        // reversion does not happen.
+        int offset = find(main, SwShConstants.saveLoadFormeReversionPrefix);
+        if (offset > 0) {
+            offset += SwShConstants.saveLoadFormeReversionPrefix.length() / 2; // because it was a prefix
+
+            // Stubs out the call to pml::pokepara::CoreParam::ChangeFormNo that reverts all these Pokemon back to base forme.
+            FileFunctions.writeFullInt(main, offset, createNopInstruction());
+        }
+
+        // Additionally, upon completing a battle, Wishiwashi-S, Zacian-C, and
+        // Zamazenta-C are forcibly returned to their base forme. This patches
+        // main to prevent this from happening.
+        offset = find(main, SwShConstants.afterBattleFormeReversionLocator);
+        if (offset > 0) {
+            // We can't just stub out the call to pml::pokepara::CoreParam::ChangeFormNo, since we *want* certain
+            // post-battle forme reversions to happen (for example, we want Xerneas to exit its Active forme).
+            // To get around this, we can deliberately break certain comparisons. The function checks to see if
+            // the species ID is one of a few different values before reverting the forme; for our three desired
+            // Pokemon, we can replace their comparisons with a nonsense species ID.
+            FileFunctions.writeFullInt(main, offset, createCmpInstruction(20, 9999, false));
+            FileFunctions.writeFullInt(main, offset + 32, createCmpInstruction(20, 9999, false));
+            FileFunctions.writeFullInt(main, offset + 40, createCmpInstruction(20, 9999, false));
+        }
     }
 
     @Override

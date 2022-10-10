@@ -167,4 +167,8 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
         instruction |= ((immediate & 0xFFFF) << 5);
         return (int)instruction;
     }
+
+    protected int createNopInstruction() {
+        return 0xD503201F;
+    }
 }

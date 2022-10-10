@@ -41,6 +41,8 @@ public class SwShConstants {
 
     public static final String ninjaskSpeciesLocator = "1F8C047141", shedinjaLocator = "81248052E00313AAE2";
 
+    public static final String saveLoadFormeReversionPrefix = "D3E00315AAE2031FAA", afterBattleFormeReversionLocator = "9FAA0B71";
+
     public static final Type[] typeTable = constructTypeTable();
 
     private static Type[] constructTypeTable() {
