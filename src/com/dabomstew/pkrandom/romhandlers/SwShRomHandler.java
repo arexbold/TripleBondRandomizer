@@ -672,12 +672,17 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
         try  {
             final int NUM_WEATHER_TABLES = 9;
-            byte[] wildData = this.readFile(romEntry.getString("WildPokemonPack"));
-            GFPack wildPack = new GFPack(wildData);
+            byte[] wildPackData = this.readFile(romEntry.getString("WildPokemonPack"));
+            GFPack wildPack = new GFPack(wildPackData);
 
-            byte[] shieldData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
+            byte[] wildData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
 
-            SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(shieldData));
+            // Make forms settable
+            for (int vTableOffset: romEntry.arrayEntries.get("WildPokemonVTableOffsets")) {
+                wildData[vTableOffset] = 6;
+            }
+
+            SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(wildData));
             for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
                 SwShWildEncounterTable table = wildArchive.encounterTables(i);
                 if (table.subTablesLength() > 0) {
@@ -708,10 +713,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     }
                 }
             }
-            byte[] newShieldData = wildArchive.getByteBuffer().array();
-            wildPack.setDataFileName("encount_t.bin",newShieldData);
-            byte[] newWildData = wildPack.writePack();
-            writeFile("bin/archive/field/resident/data_table.gfpak",newWildData);
+            wildPack.setDataFileName(romEntry.getString("WildPokemonFile"),wildArchive.getByteBuffer().array());
+            writeFile(romEntry.getString("WildPokemonPack"),wildPack.writePack());
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -2159,22 +2162,6 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             byte[] placementData = readFile(romEntry.getString("Placement"));
             placementPack = new GFPack(placementData);
             placementAreaTable = new AHTB(placementPack.getDataFileName("AreaNameHashTable.tbl"));
-            for (String areaName: placementAreaTable.map.values()) {
-                byte[] thisArea = placementPack.getDataFileName(areaName + ".bin");
-                SwShPlacementAreaArchive arc =
-                        SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(thisArea));
-                for (int i = 0; i < arc.placementZonesLength(); i++) {
-                    SwShPlacementZone thisZone = arc.placementZones(i);
-
-                }
-            }
-//            byte[] townScript = readFile("bin/script/amx/z_t0101_i0101.amx");
-//            AMX townAMX = new AMX(townScript);
-//            byte[] decScript = townAMX.decData;
-//            File decFile = new File("E:\\kod\\universal-pokemon-randomizer\\classes\\artifacts\\rando\\z_t0101_i0101_dec.amx");
-//            RandomAccessFile thisFile = new RandomAccessFile(decFile,"rw");
-//            thisFile.write(decScript);
-//            thisFile.close();
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
