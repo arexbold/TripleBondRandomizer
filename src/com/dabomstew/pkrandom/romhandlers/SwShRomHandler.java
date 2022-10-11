@@ -1622,22 +1622,36 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public int miscTweaksAvailable() {
         int available = 0;
+        available |= MiscTweak.FASTEST_TEXT.getValue();
         available |= MiscTweak.RETAIN_ALT_FORMES.getValue();
         return available;
     }
 
     @Override
     public void applyMiscTweak(MiscTweak tweak) {
-        if (tweak == MiscTweak.RETAIN_ALT_FORMES) {
-            try {
-                patchFormeReversion();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        if (tweak == MiscTweak.FASTEST_TEXT) {
+            applyFastestText();
+        } else if (tweak == MiscTweak.RETAIN_ALT_FORMES) {
+            patchFormeReversion();
         }
     }
 
-    private void patchFormeReversion() throws IOException {
+    private void applyFastestText() {
+        int offset = find(main, SwShConstants.fastestTextPrefixes[0]);
+        if (offset > 0) {
+            offset += SwShConstants.fastestTextPrefixes[0].length() / 2; // because it was a prefix
+            int patchedInstruction = createMovzInstruction(0, 3, false);
+            FileFunctions.writeFullInt(main, offset, patchedInstruction);
+        }
+        offset = find(main, SwShConstants.fastestTextPrefixes[1]);
+        if (offset > 0) {
+            offset += SwShConstants.fastestTextPrefixes[1].length() / 2; // because it was a prefix
+            int patchedInstruction = createMovzInstruction(0, 3, false);
+            FileFunctions.writeFullInt(main, offset, patchedInstruction);
+        }
+    }
+
+    private void patchFormeReversion() {
         // Upon loading a save, Darmanitan-Z, Darmanitan-GZ, Aegislash-B, Zygarde-C,
         // Wishiwashi-S, Eiscue-N, Zacian-C, Zamazenta-C, and Eternatus-E are all
         // reverted back to their base forme. This patches main such that this

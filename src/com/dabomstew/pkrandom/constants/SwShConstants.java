@@ -41,6 +41,8 @@ public class SwShConstants {
 
     public static final String ninjaskSpeciesLocator = "1F8C047141", shedinjaLocator = "81248052E00313AAE2";
 
+    public static final String[] fastestTextPrefixes = new String[]{"40F915F940F9B50000B4E00315AA088C44F8080940F900013FD6E00315AA", "14002945F9"};
+
     public static final String saveLoadFormeReversionPrefix = "D3E00315AAE2031FAA", afterBattleFormeReversionLocator = "9FAA0B71";
 
     public static final Type[] typeTable = constructTypeTable();
