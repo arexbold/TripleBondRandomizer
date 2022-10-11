@@ -426,14 +426,40 @@ public class SwShConstants {
             damageAbsorbQuality = 8;
 
     public static final List<Integer> unusableMoves = Arrays.asList(
-            2, 3, 4, 13, 26, 27, 41, 49, 82, 96, 99, 112, 117, 119, 121, 125, 128, 131, 132, 140, 145, 146, 148, 149,
-            158, 159, 166, 169, 171, 185, 193, 216, 218, 222, 228, 237, 265, 274, 287, 289, 290, 293, 294, 300, 301,
-            302, 316, 318, 320, 324, 327, 346, 354, 357, 358, 363, 373, 376, 377, 378, 381, 382, 386, 391, 426, 429,
-            431, 443, 445, 448, 449, 456, 464, 465, 466, 477, 481, 485, 498, 507, 516, 531, 537, 547, 563, 569, 593,
-            600, 617, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639,
-            640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 665, 671,
-            672, 686, 690, 695, 696, 697, 698, 699, 700, 701, 702, 703, 719, 723, 724, 725, 726, 727, 728, 729, 730,
-            731, 732, 733, 734, 735, 736, 737, 738, 739, 740, 741
+            Moves.karateChop, Moves.doubleSlap, Moves.cometPunch, Moves.razorWind, Moves.jumpKick, Moves.rollingKick,
+            Moves.twineedle, Moves.sonicBoom, Moves.dragonRage, Moves.meditate, Moves.rage, Moves.barrier, Moves.bide,
+            Moves.mirrorMove, Moves.eggBomb, Moves.boneClub, Moves.clamp, Moves.spikeCannon, Moves.constrict, Moves.barrage,
+            Moves.bubble, Moves.dizzyPunch, Moves.flash, Moves.psywave, Moves.hyperFang, Moves.sharpen, Moves.sketch,
+            Moves.spiderWeb, Moves.nightmare, Moves.feintAttack, Moves.foresight, Moves.returnTheMoveNotTheKeyword,
+            Moves.frustration, Moves.magnitude, Moves.pursuit, Moves.hiddenPower, Moves.smellingSalts, Moves.assist,
+            Moves.refresh, Moves.snatch, Moves.secretPower, Moves.camouflage, Moves.tailGlow, Moves.mudSport, Moves.iceBall,
+            Moves.needleArm, Moves.odorSleuth, Moves.silverWind, Moves.grassWhistle, Moves.signalBeam, Moves.skyUppercut,
+            Moves.waterSport, Moves.psychoBoost, Moves.miracleEye, Moves.wakeUpSlap, Moves.naturalGift, Moves.embargo,
+            Moves.trumpCard, Moves.healBlock, Moves.wringOut, Moves.luckyChant, Moves.meFirst, Moves.punishment,
+            Moves.heartSwap, Moves.mudBomb, Moves.mirrorShot, Moves.rockClimb, Moves.magnetBomb, Moves.captivate,
+            Moves.chatter, Moves.judgment, Moves.healOrder, Moves.darkVoid, Moves.seedFlare, Moves.ominousWind,
+            Moves.telekinesis, Moves.flameBurst, Moves.synchronoise, Moves.chipAway, Moves.skyDrop, Moves.bestow,
+            Moves.heartStamp, Moves.steamroller, Moves.relicSong, Moves.rototiller, Moves.ionDeluge, Moves.hyperspaceHole,
+            Moves.powder, Moves.lightOfRuin, Moves.hyperspaceFury, Moves.breakneckBlitzPhysical, Moves.breakneckBlitzSpecial,
+            Moves.allOutPummelingPhysical, Moves.allOutPummelingSpecial, Moves.supersonicSkystrikePhysical,
+            Moves.supersonicSkystrikeSpecial, Moves.acidDownpourPhysical, Moves.acidDownpourSpecial,
+            Moves.tectonicRagePhysical, Moves.tectonicRageSpecial, Moves.continentalCrushPhysical,
+            Moves.continentalCrushSpecial, Moves.savageSpinOutPhysical, Moves.savageSpinOutSpecial,
+            Moves.neverEndingNightmarePhysical, Moves.neverEndingNightmareSpecial, Moves.corkscrewCrashPhysical,
+            Moves.corkscrewCrashSpecial, Moves.infernoOverdrivePhysical, Moves.infernoOverdriveSpecial,
+            Moves.hydroVortexPhysical, Moves.hydroVortexSpecial, Moves.bloomDoomPhysical, Moves.bloomDoomSpecial,
+            Moves.gigavoltHavocPhysical, Moves.gigavoltHavocSpecial, Moves.shatteredPsychePhysical,
+            Moves.shatteredPsycheSpecial, Moves.subzeroSlammerPhysical, Moves.subzeroSlammerSpecial,
+            Moves.devastatingDrakePhysical, Moves.devastatingDrakeSpecial, Moves.blackHoleEclipsePhysical,
+            Moves.blackHoleEclipseSpecial, Moves.twinkleTacklePhysical, Moves.twinkleTackleSpecial, Moves.catastropika,
+            Moves.iceHammer, Moves.spotlight, Moves.toxicThread, Moves.revelationDance, Moves.beakBlast,
+            Moves.sinisterArrowRaid, Moves.maliciousMoonsault, Moves.oceanicOperetta, Moves.guardianOfAlola,
+            Moves.soulStealing7StarStrike, Moves.stokedSparksurfer, Moves.pulverizingPancake, Moves.extremeEvoboost,
+            Moves.genesisSupernova, Moves.tenMillionVoltThunderbolt, Moves.lightThatBurnsTheSky, Moves.searingSunrazeSmash,
+            Moves.menacingMoonrazeMaelstrom, Moves.letsSnuggleForever, Moves.splinteredStormshards,
+            Moves.clangorousSoulblaze, Moves.zippyZap, Moves.splishySplash, Moves.floatyFall, Moves.pikaPapow,
+            Moves.bouncyBubble, Moves.buzzyBuzz, Moves.sizzlySlide, Moves.glitzyGlow, Moves.baddyBad, Moves.sappySeed,
+            Moves.freezyFrost, Moves.sparklySwirl, Moves.veeveeVolley
     );
 
     public static Map<Integer, List<Integer>> getHardcodedTradeTextOffsets() {
