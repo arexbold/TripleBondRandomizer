@@ -35,9 +35,13 @@ public class SwShConstants {
 
     public static final int duplicateTrade = 9;
 
-    public static final int tmCount = 100, tmBlockOneCount = 92, tmBlockTwoCount = 3, tmBlockThreeCount = 4,
+    public static final int tmCount = 100, trCount = 100, tmBlockOneCount = 92, tmBlockTwoCount = 3, tmBlockThreeCount = 4,
             tmBlockFourCount = 1, tmBlockOneOffset = Items.tm01, tmBlockTwoOffset = Items.tm93,
             tmBlockThreeOffset = Items.tm96, tmBlockFourOffset = Items.tm00;
+
+    public static final int tmTrMoveTableOffset = 0xCD4;
+
+    public static final int itemPropertiesEntryLength = 0x30;
 
     public static final String ninjaskSpeciesLocator = "1F8C047141", shedinjaLocator = "81248052E00313AAE2";
 

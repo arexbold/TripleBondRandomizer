@@ -195,6 +195,27 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         return null;
     }
 
+    public class SwShItem {
+        public int price;
+        public int priceWatts;
+        public int priceBPOrDyniteOre;
+        public int sprite;
+
+        public SwShItem(byte[] itemData, int offset) {
+            price = FileFunctions.readFullInt(itemData, offset);
+            priceWatts = FileFunctions.readFullInt(itemData, offset + 0x4);
+            priceBPOrDyniteOre = FileFunctions.readFullInt(itemData, offset + 0x8);
+            sprite = FileFunctions.read2ByteInt(itemData, offset + 0x1A);
+        }
+
+        public void outputToItemData(byte[] itemData, int offset) {
+            FileFunctions.writeFullInt(itemData, offset, price);
+            FileFunctions.writeFullInt(itemData, offset + 0x4, priceWatts);
+            FileFunctions.writeFullInt(itemData, offset + 0x8, priceBPOrDyniteOre);
+            FileFunctions.write2ByteInt(itemData, offset + 0x1A, sprite);
+        }
+    }
+
     // This ROM
     private RomEntry romEntry;
     private byte[] main;
@@ -207,6 +228,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     private Move[] moves;
     private Map<Long,Integer> itemHashToIndex;
     private List<Long> itemIndexToHash;
+    private Map<Integer, SwShItem> itemTable;
     private GFPack placementPack;
     private AHTB placementAreaTable;
     private SwShGiftEncounterArchive giftEncounterArchive = null;
@@ -1099,9 +1121,28 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     }
 
+    // TODO: Fix the log being really weird with this
     @Override
     public List<Integer> getTMMoves() {
-        return null;
+        try {
+            byte[] itemData = readFile(romEntry.getString("ItemData"));
+            List<Integer> tms = new ArrayList<>();
+
+            // TM and TR information is stored in numerical order in a simple table, where each entry looks like this:
+            // - 2 byte item ID
+            // - 2 byte move ID
+            // We start at the very beginning of the table and simply work our way down, adding move IDs to the list.
+            int currentOffset = SwShConstants.tmTrMoveTableOffset;
+            for (int i = 0; i < SwShConstants.tmCount + SwShConstants.trCount; i++) {
+                int move = FileFunctions.read2ByteInt(itemData, currentOffset + 2);
+                tms.add(move);
+                currentOffset += 4;
+            }
+
+            return tms;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
@@ -1111,12 +1152,31 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void setTMMoves(List<Integer> moveIndexes) {
+        try {
+            byte[] itemData = readFile(romEntry.getString("ItemData"));
+            int currentOffset = SwShConstants.tmTrMoveTableOffset;
+            for (int i = 0; i < SwShConstants.tmCount + SwShConstants.trCount; i++) {
+                // Change what move the TM/TR teaches.
+                FileFunctions.write2ByteInt(itemData, currentOffset + 2, moveIndexes.get(i));
 
+                // Adjust the sprite to match the new move type.
+                int itemIndex = FileFunctions.read2ByteInt(itemData, currentOffset);
+                SwShItem item = itemTable.get(itemIndex);
+                Move m = moves[moveIndexes.get(i)];
+                int newSpriteNumber = i < SwShConstants.tmCount ? typeTMSpriteNumber(m.type) : typeTRSpriteNumber(m.type);
+                item.sprite = newSpriteNumber;
+
+                currentOffset += 4;
+            }
+            writeFile(romEntry.getString("ItemData"), itemData);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public int getTMCount() {
-        return 100;
+        return SwShConstants.tmCount + SwShConstants.trCount;
     }
 
     @Override
@@ -1751,6 +1811,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             itemNames = getStrings(romEntry.getString("ItemNames"));
             setupItemHashes();
             getFieldItems();
+            populateItemTable();
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -2181,11 +2242,32 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
+    private void populateItemTable() {
+        try {
+            byte[] itemData = readFile(romEntry.getString("ItemData"));
+            itemTable = new HashMap<>();
+            int numEntries = FileFunctions.read2ByteInt(itemData, 0);
+            int maxEntryIndex = FileFunctions.read2ByteInt(itemData, 4);
+            int entriesStart = FileFunctions.read2ByteInt(itemData, 0x40);
+            for (int i = 0; i < numEntries; i++) {
+                int entryIndex = FileFunctions.read2ByteInt(itemData, 0x44 + (2 * i));
+                if (entryIndex >= maxEntryIndex) {
+                    throw new RandomizerIOException("Invalid item data file.");
+                }
+                SwShItem item = new SwShItem(itemData, entriesStart + (entryIndex * SwShConstants.itemPropertiesEntryLength));
+                itemTable.put(i, item);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
     @Override
     protected void savingROM() throws IOException {
         savePokemonStats();
         saveMoves();
         savePlacement();
+        saveItemTable();
         writeMain(main);
     }
 
@@ -2374,6 +2456,27 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         }
     }
 
+    private void saveItemTable() {
+        try {
+            byte[] itemData = readFile(romEntry.getString("ItemData"));
+            int numEntries = FileFunctions.read2ByteInt(itemData, 0);
+            int maxEntryIndex = FileFunctions.read2ByteInt(itemData, 4);
+            int entriesStart = FileFunctions.read2ByteInt(itemData, 0x40);
+            for (int i = 0; i < numEntries; i++) {
+                int entryIndex = FileFunctions.read2ByteInt(itemData, 0x44 + (2 * i));
+                if (entryIndex >= maxEntryIndex) {
+                    throw new RandomizerIOException("Invalid item data file.");
+                }
+                SwShItem item = itemTable.get(i);
+                int startingOffset = entriesStart + (entryIndex * SwShConstants.itemPropertiesEntryLength);
+                item.outputToItemData(itemData, startingOffset);
+            }
+            writeFile(romEntry.getString("ItemData"), itemData);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
     private List<String> getStrings(String fileName) throws IOException {
         byte[] rawFile = this.readFile(fileName);
         // TODO handle romType better
@@ -2409,6 +2512,96 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     protected String getGameVersion() {
         return null;
+    }
+
+    private int typeTMSpriteNumber(Type t) {
+        if (t == null) {
+            return 357; // CURSE
+        }
+        switch (t) {
+            case DARK:
+                return 328;
+            case DRAGON:
+                return 329;
+            case PSYCHIC:
+                return 330;
+            case NORMAL:
+                return 332;
+            case POISON:
+                return 333;
+            case ICE:
+                return 334;
+            case FIGHTING:
+                return 335;
+            case FIRE:
+                return 338;
+            case WATER:
+                return 345;
+            case FLYING:
+                return 421;
+            case GRASS:
+                return 349;
+            case ROCK:
+                return 350;
+            case ELECTRIC:
+                return 351;
+            case GROUND:
+                return 353;
+            case GHOST:
+            default:
+                return 357; // for CURSE
+            case STEEL:
+                return 401;
+            case BUG:
+                return 403;
+            case FAIRY:
+                return 693;
+        }
+    }
+
+    private int typeTRSpriteNumber(Type t) {
+        if (t == null) {
+            return 1163; // CURSE
+        }
+        switch (t) {
+            case DARK:
+                return 1162;
+            case DRAGON:
+                return 1154;
+            case PSYCHIC:
+                return 1141;
+            case NORMAL:
+                return 1130;
+            case POISON:
+                return 1152;
+            case ICE:
+                return 1135;
+            case FIGHTING:
+                return 1137;
+            case FIRE:
+                return 1132;
+            case WATER:
+                return 1133;
+            case FLYING:
+                return 1196;
+            case GRASS:
+                return 1180;
+            case ROCK:
+                return 1193;
+            case ELECTRIC:
+                return 1138;
+            case GROUND:
+                return 1140;
+            case GHOST:
+            default:
+                return 1163; // for CURSE
+            case STEEL:
+                return 1161;
+            case BUG:
+                return 1148;
+            case FAIRY:
+                return 1220;
+        }
     }
 
     private int find(byte[] data, String hexString) {
