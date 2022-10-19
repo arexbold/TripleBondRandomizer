@@ -8,7 +8,6 @@ import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
 import com.dabomstew.pkrandom.hac.AHTB;
-import com.dabomstew.pkrandom.hac.AMX;
 import com.dabomstew.pkrandom.hac.GFPack;
 import com.dabomstew.pkrandom.hac.SwitchFileReader;
 import com.dabomstew.pkrandom.pokemon.*;
@@ -57,6 +56,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         private Map<String, String> strings = new HashMap<>();
         private Map<String, Integer> numbers = new HashMap<>();
         private Map<String, int[]> arrayEntries = new HashMap<>();
+        private Map<Integer, List<Integer>> linkedStaticOffsets = new HashMap<>();
 
         private int getInt(String key) {
             if (!numbers.containsKey(key)) {
@@ -109,6 +109,16 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                             current.contentId = r[1];
                         } else if (r[0].equals("MainCRC32")) {
                             current.mainCRC32 = parseRILong("0x" + r[1].trim());
+                        } else if (r[0].equals("LinkedStaticEncounterOffsets")) {
+                            String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
+                            for (int i = 0; i < offsets.length; i++) {
+                                String[] parts = offsets[i].split(":");
+                                List<Integer> vals = Arrays.stream(Arrays.copyOfRange(parts,1,parts.length)).
+                                        mapToInt(v -> Integer.parseInt(v.trim()))
+                                        .boxed()
+                                        .collect(Collectors.toList());
+                                current.linkedStaticOffsets.put(Integer.parseInt(parts[0].trim()),vals);
+                            }
                         } else if (r[0].endsWith("Offset") || r[0].endsWith("Count") || r[0].endsWith("Number")) {
                             int offs = parseRIInt(r[1]);
                             current.numbers.put(r[0], offs);
@@ -128,6 +138,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                             for (RomEntry otherEntry : roms) {
                                 if (r[1].equalsIgnoreCase(otherEntry.contentId)) {
                                     // copy from here
+                                    current.linkedStaticOffsets.putAll(otherEntry.linkedStaticOffsets);
                                     current.arrayEntries.putAll(otherEntry.arrayEntries);
                                     current.numbers.putAll(otherEntry.numbers);
                                     current.strings.putAll(otherEntry.strings);
@@ -309,6 +320,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public boolean setStarters(List<Pokemon> newStarters) {
         try {
+            // Need to rewrite this flatbuffer to make forms settable, might already have been done in setStaticPokemon
             if (giftEncounterArchive == null) {
                 byte[] data = readFile(romEntry.getString("GiftPokemon"));
                 SwShGiftEncounterArchive oldArc =
@@ -582,56 +594,176 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         List<EncounterSet> encounters = new ArrayList<>();
         try  {
             final int NUM_WEATHER_TABLES = 9;
-            byte[] wildData = this.readFile(romEntry.getString("WildPokemonPack"));
-            GFPack wildPack = new GFPack(wildData);
+            byte[] wildPackData = this.readFile(romEntry.getString("WildPokemonPack"));
+            GFPack wildPack = new GFPack(wildPackData);
 
-            byte[] shieldData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
+            byte[] wildData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
+            byte[] symbolData = wildPack.getDataFileName(romEntry.getString("SymbolPokemonFile"));
 
-            SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(shieldData));
-            for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
-                SwShWildEncounterTable table = wildArchive.encounterTables(i);
-                String tableName = SwShConstants.getZoneName(table.zoneId());
-                if (table.subTablesLength() > 0) {
+            SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(wildData));
+            SwShWildEncounterArchive symbolArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(symbolData));
+
+            Map<String,Integer> symbolZoneNames = new HashMap<>();
+            List<String> symbolZoneNamesWithWeather = new ArrayList<>();
+            int internalOrder = 0;
+            for (int i = 0; i < symbolArchive.encounterTablesLength(); i++) {
+                SwShWildEncounterTable symbolTable = symbolArchive.encounterTables(i);
+                String tableName = SwShConstants.getZoneName(symbolTable.zoneId());
+                symbolZoneNames.put(tableName,internalOrder);
+                if (symbolTable.subTablesLength() > 0 || symbolTable.subTablesLength() > 0) {
                     int j = 0;
-                    if (isAllWeatherTablesIdentical(table, NUM_WEATHER_TABLES)) {
-                        SwShWildEncounterSubTable subTable = table.subTables(0);
-                        EncounterSet es = new EncounterSet();
-                        es.displayName = tableName + " (All Weather)";
-                        for (int k = 0; k < subTable.slotsLength(); k++) {
-                            SwShWildEncounterSlot slot = subTable.slots(k);
-                            if (slot.species() == 0) {
-                                continue;
-                            }
-                            Encounter e = new Encounter();
-                            e.pokemon = getPokemonForEncounter(slot.species(), slot.form());
-                            e.formeNumber = slot.form();
-                            e.probability = slot.probability();
-                            e.level = subTable.levelMin();
-                            e.maxLevel = subTable.levelMax();
-                            es.encounters.add(e);
-                        }
-                        encounters.add(es);
+                    if (isAllWeatherTablesIdentical(symbolTable, NUM_WEATHER_TABLES)) {
+                        EncounterSet symbolEs = readEncounterSet(tableName + " (All Weather) (Visible)", symbolTable.subTables(0));
+                        symbolEs.offset = internalOrder;
+                        symbolEs.prettyOrder = internalOrder;
+                        internalOrder++;
+
+                        encounters.add(symbolEs);
+                        symbolZoneNamesWithWeather.add(tableName + " (All Weather)");
                         j = NUM_WEATHER_TABLES;
                     }
-                    while (j < table.subTablesLength()) {
-                        SwShWildEncounterSubTable subTable = table.subTables(j);
-                        EncounterSet es = new EncounterSet();
-                        es.displayName = tableName + " (" + SwShConstants.encounterTypes.get(j) + ")";
-                        for (int k = 0; k < subTable.slotsLength(); k++) {
-                            SwShWildEncounterSlot slot = subTable.slots(k);
-                            if (slot.species() == 0) {
-                                continue;
-                            }
-                            Encounter e = new Encounter();
-                            e.pokemon = getPokemonForEncounter(slot.species(), slot.form());
-                            e.formeNumber = slot.form();
-                            e.probability = slot.probability();
-                            e.level = subTable.levelMin();
-                            e.maxLevel = subTable.levelMax();
-                            es.encounters.add(e);
-                        }
-                        encounters.add(es);
+                    while (j < symbolTable.subTablesLength()) {
+
+                        EncounterSet symbolEs = readEncounterSet(
+                                tableName + " (" + SwShConstants.encounterTypes.get(j) + ") (Visible)",
+                                symbolTable.subTables(j));
+                        symbolEs.offset = internalOrder;
+                        symbolEs.prettyOrder = internalOrder;
+                        internalOrder++;
+
+                        encounters.add(symbolEs);
+                        symbolZoneNamesWithWeather.add(tableName + " (" + SwShConstants.encounterTypes.get(j) + ")");
                         j++;
+                    }
+                }
+            }
+            for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
+                SwShWildEncounterTable wildTable = wildArchive.encounterTables(i);
+                String tableName = SwShConstants.getZoneName(wildTable.zoneId());
+                if (wildTable.subTablesLength() > 0) {
+                    int j = 0;
+                    if (isAllWeatherTablesIdentical(wildTable, NUM_WEATHER_TABLES)) {
+                        EncounterSet wildEs = readEncounterSet(tableName + " (All Weather)", wildTable.subTables(0));
+                        wildEs.offset = internalOrder;
+                        Integer sameZoneOffset = symbolZoneNamesWithWeather.indexOf(tableName + " (All Weather)");
+                        if (sameZoneOffset >= 0) {
+                            wildEs.prettyOrder = sameZoneOffset;
+                        } else {
+                            sameZoneOffset = symbolZoneNames.get(tableName);
+                            if (sameZoneOffset != null) {
+                                wildEs.prettyOrder = sameZoneOffset;
+                            } else {
+                                wildEs.prettyOrder = internalOrder;
+                            }
+                        }
+                        internalOrder++;
+
+                        encounters.add(wildEs);
+                        j = NUM_WEATHER_TABLES;
+                    }
+                    while (j < wildTable.subTablesLength()) {
+                        EncounterSet wildEs =
+                                readEncounterSet(tableName + " (" + SwShConstants.encounterTypes.get(j) + ")", wildTable.subTables(j));
+                        wildEs.offset = internalOrder;
+                        Integer sameZoneOffset = symbolZoneNamesWithWeather.indexOf(tableName + " (" + SwShConstants.encounterTypes.get(j) + ")");
+                        if (sameZoneOffset >= 0) {
+                            wildEs.prettyOrder = sameZoneOffset;
+                        } else {
+                            sameZoneOffset = symbolZoneNames.get(tableName);
+                            if (sameZoneOffset != null) {
+                                wildEs.prettyOrder = sameZoneOffset;
+                            } else {
+                                wildEs.prettyOrder = internalOrder;
+                            }
+                        }
+                        internalOrder++;
+
+                        encounters.add(wildEs);
+                        j++;
+                    }
+                }
+            }
+
+            // Wanderers
+            byte[] staticEncounterData = readFile(romEntry.getString("StaticPokemon"));
+            SwShStaticEncounterArchive staticArc =
+                    SwShStaticEncounterArchive.getRootAsSwShStaticEncounterArchive(ByteBuffer.wrap(staticEncounterData));
+            Map<Long,Encounter> wanderers = new HashMap<>();
+            List<Integer> excludeIndices = Arrays.stream(romEntry.arrayEntries.get("RealStaticPokemon")).boxed().collect(Collectors.toList());
+            for (int i = 0; i < staticArc.staticEncountersLength(); i++) {
+                if (excludeIndices.contains(i)) {
+                    continue;
+                }
+                SwShStaticEncounter enc = staticArc.staticEncounters(i);
+                Encounter e = new Encounter();
+                e.pokemon = getPokemonForEncounter(enc.species(), enc.form());
+                e.formeNumber = enc.form();
+                e.level = enc.level();
+                e.wandererIndex = i;
+                wanderers.put(enc.encounterId(),e);
+            }
+            for (String areaName: SwShConstants.areasWithWanderers) {
+                byte[] arcData = placementPack.getDataFileName(areaName);
+                SwShPlacementAreaArchive arc =
+                        SwShPlacementAreaArchive.getRootAsSwShPlacementAreaArchive(ByteBuffer.wrap(arcData));
+                for (int i = 0; i < arc.placementZonesLength(); i++) {
+                    SwShPlacementZone zone = arc.placementZones(i);
+                    String zoneName = SwShConstants.getZoneName(zone.meta().zoneId());
+                    if (zoneName == null) continue;
+                    EncounterSet[] encounterSets = new EncounterSet[10];
+                    for (int j = 0; j < zone.staticObjectsLength(); j++) {
+                        SwShPlacementStaticObject so = zone.staticObjects(j).object();
+                        boolean allSame = true;
+                        long firstID = so.spawns(0).spawnId();
+                        for (int k = 1; k < so.spawnsLength(); k++) {
+                            if (so.spawns(k).spawnId() != firstID) {
+                                allSame = false;
+                                break;
+                            }
+                        }
+                        if (allSame) {
+                            if (encounterSets[0] == null) {
+                                encounterSets[0] = new EncounterSet();
+                                encounterSets[0].displayName = zoneName + " (All Weather) (Wanderer)";
+                            }
+                            Encounter thisWanderer = wanderers.get(so.spawns(0).spawnId());
+                            if (thisWanderer != null && !encounterSets[0].encounters.contains(thisWanderer)) {
+                                encounterSets[0].encounters.add(thisWanderer);
+                            }
+                        } else {
+                            for (int k = 0; k < so.spawnsLength(); k++) {
+                                if (encounterSets[k+1] == null) {
+                                    encounterSets[k+1] = new EncounterSet();
+                                    encounterSets[k+1].displayName = zoneName + " (" + SwShConstants.encounterTypes.get(k) + ") (Wanderer)";
+                                }
+                                Encounter thisWanderer = wanderers.get(so.spawns(k).spawnId());
+                                if (thisWanderer != null && !encounterSets[k+1].encounters.contains(thisWanderer)) {
+                                    encounterSets[k+1].encounters.add(thisWanderer);
+                                }
+                            }
+                        }
+                    }
+                    for (int j = 0; j < 10; j++) {
+                        if (encounterSets[j] == null) continue;
+                        encounterSets[j].offset = internalOrder;
+                        Integer sameZoneOffset;
+                        if (j == 0) {
+                            sameZoneOffset = symbolZoneNamesWithWeather.indexOf(encounterSets[j] + " (All Weather)");
+                        } else {
+                            sameZoneOffset = symbolZoneNamesWithWeather.indexOf(encounterSets[j] + " (" + SwShConstants.encounterTypes.get(j-1) + ")");
+                        }
+                        if (sameZoneOffset >= 0) {
+                            encounterSets[j].prettyOrder = sameZoneOffset;
+                        } else {
+                            sameZoneOffset = symbolZoneNames.get(zoneName);
+                            if (sameZoneOffset != null) {
+                                encounterSets[j].prettyOrder = sameZoneOffset;
+                            } else {
+                                encounterSets[j].prettyOrder = internalOrder;
+                            }
+                        }
+                        encounters.add(encounterSets[j]);
+                        internalOrder++;
                     }
                 }
             }
@@ -639,7 +771,27 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             throw new RandomizerIOException(e);
         }
 
-        return encounters;
+        return encounters.stream().sorted(Comparator.comparingInt(es -> es.prettyOrder)).collect(Collectors.toList());
+    }
+
+    private EncounterSet readEncounterSet(String tableName, SwShWildEncounterSubTable subTable) {
+        EncounterSet es = new EncounterSet();
+        es.displayName = tableName;
+        for (int k = 0; k < subTable.slotsLength(); k++) {
+            SwShWildEncounterSlot slot = subTable.slots(k);
+            if (slot.species() == 0) {
+                continue;
+            }
+            Encounter e = new Encounter();
+            e.pokemon = getPokemonForEncounter(slot.species(), slot.form());
+            e.formeNumber = slot.form();
+            e.probability = slot.probability();
+            e.level = subTable.levelMin();
+            e.maxLevel = subTable.levelMax();
+            es.encounters.add(e);
+        }
+
+        return es;
     }
 
     private boolean isAllWeatherTablesIdentical(SwShWildEncounterTable table, int numWeatherTables) {
@@ -690,7 +842,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void setEncounters(boolean useTimeOfDay, List<EncounterSet> encountersList) {
-        Iterator<EncounterSet> encounters = encountersList.iterator();
+        Iterator<EncounterSet> encounters = encountersList
+                .stream()
+                .sorted(Comparator.comparingInt(es -> es.offset))
+                .collect(Collectors.toList())
+                .iterator();
 
         try  {
             final int NUM_WEATHER_TABLES = 9;
@@ -698,33 +854,49 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             GFPack wildPack = new GFPack(wildPackData);
 
             byte[] wildData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
+            byte[] symbolData = wildPack.getDataFileName(romEntry.getString("SymbolPokemonFile"));
+            byte[] staticEncounterData = readFile(romEntry.getString("StaticPokemon"));
 
             // Make forms settable
             for (int vTableOffset: romEntry.arrayEntries.get("WildPokemonVTableOffsets")) {
                 wildData[vTableOffset] = 6;
             }
+            for (int vTableOffset: romEntry.arrayEntries.get("SymbolPokemonVTableOffsets")) {
+                symbolData[vTableOffset] = 6;
+            }
+            for (int i = 0; i < romEntry.arrayEntries.get("StaticPokemonVTables").length; i++) {
+                int newFormOffset = romEntry.arrayEntries.get("StaticPokemonNewFormOffsets")[i];
+                if (newFormOffset < 0) continue;
+                int vTableOffset = romEntry.arrayEntries.get("StaticPokemonVTables")[i];
+                staticEncounterData[vTableOffset + 0x14] = (byte)newFormOffset;
+            }
 
-            SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(wildData));
-            for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
-                SwShWildEncounterTable table = wildArchive.encounterTables(i);
-                if (table.subTablesLength() > 0) {
+            SwShWildEncounterArchive wildArchive =
+                    SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(wildData));
+            SwShWildEncounterArchive symbolArchive =
+                    SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(symbolData));
+            SwShStaticEncounterArchive staticArc =
+                    SwShStaticEncounterArchive.getRootAsSwShStaticEncounterArchive(ByteBuffer.wrap(staticEncounterData));
+            for (int i = 0; i < symbolArchive.encounterTablesLength(); i++) {
+                SwShWildEncounterTable symbolTable = symbolArchive.encounterTables(i);
+                if (symbolTable.subTablesLength() > 0) {
                     boolean distinctWeatherTables = true;
-                    if (isAllWeatherTablesIdentical(table, NUM_WEATHER_TABLES)) {
+                    if (isAllWeatherTablesIdentical(symbolTable, NUM_WEATHER_TABLES)) {
                         distinctWeatherTables = false;
                     }
-                    EncounterSet es = encounters.next();
-                    for (int j = 0; j < table.subTablesLength(); j++) {
+                    EncounterSet symbolEs = encounters.next();
+                    for (int j = 0; j < symbolTable.subTablesLength(); j++) {
 
                         if (j >= NUM_WEATHER_TABLES || (j > 0 && distinctWeatherTables)) {
-                            es = encounters.next();
+                            symbolEs = encounters.next();
                         }
-                        SwShWildEncounterSubTable subTable = table.subTables(j);
+                        SwShWildEncounterSubTable subTable = symbolTable.subTables(j);
                         for (int k = 0; k < subTable.slotsLength(); k++) {
                             SwShWildEncounterSlot slot = subTable.slots(k);
                             if (slot.species() == 0) {
                                 continue;
                             }
-                            Encounter e = es.encounters.get(k);
+                            Encounter e = symbolEs.encounters.get(k);
                             slot.mutateSpecies(e.pokemon.getBaseNumber());
                             slot.mutateForm(e.formeNumber);
                             if (k == 0) {
@@ -735,8 +907,55 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     }
                 }
             }
+            for (int i = 0; i < wildArchive.encounterTablesLength(); i++) {
+                SwShWildEncounterTable wildTable = wildArchive.encounterTables(i);
+                if (wildTable.subTablesLength() > 0) {
+                    boolean distinctWeatherTables = true;
+                    if (isAllWeatherTablesIdentical(wildTable, NUM_WEATHER_TABLES)) {
+                        distinctWeatherTables = false;
+                    }
+                    EncounterSet wildEs = encounters.next();
+                    for (int j = 0; j < wildTable.subTablesLength(); j++) {
+
+                        if (j >= NUM_WEATHER_TABLES || (j > 0 && distinctWeatherTables)) {
+                            wildEs = encounters.next();
+                        }
+                        SwShWildEncounterSubTable subTable = wildTable.subTables(j);
+                        for (int k = 0; k < subTable.slotsLength(); k++) {
+                            SwShWildEncounterSlot slot = subTable.slots(k);
+                            if (slot.species() == 0) {
+                                continue;
+                            }
+                            Encounter e = wildEs.encounters.get(k);
+                            slot.mutateSpecies(e.pokemon.getBaseNumber());
+                            slot.mutateForm(e.formeNumber);
+                            if (k == 0) {
+                                subTable.mutateLevelMin(e.level);
+                                subTable.mutateLevelMax(e.maxLevel);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Wanderers
+            while (encounters.hasNext()) {
+                EncounterSet wandererEs = encounters.next();
+                for (Encounter e: wandererEs.encounters) {
+                    if (e.modificationState == Encounter.DATA_WRITTEN) continue;
+                    if (e.wandererIndex >= 0) {
+                        SwShStaticEncounter enc = staticArc.staticEncounters(e.wandererIndex);
+                        enc.mutateSpecies(e.pokemon.getBaseNumber());
+                        enc.mutateForm(e.formeNumber);
+                        enc.mutateLevel(e.level);
+                        e.modificationState = Encounter.DATA_WRITTEN;
+                    }
+                }
+            }
             wildPack.setDataFileName(romEntry.getString("WildPokemonFile"),wildArchive.getByteBuffer().array());
+            wildPack.setDataFileName(romEntry.getString("SymbolPokemonFile"),symbolArchive.getByteBuffer().array());
             writeFile(romEntry.getString("WildPokemonPack"),wildPack.writePack());
+            writeFile(romEntry.getString("StaticPokemon"),staticArc.getByteBuffer().array());
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -745,6 +964,33 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     @Override
     public boolean hasWildAltFormes() {
         return true;
+    }
+
+    private byte[] constructNewStaticEncounterArchiveFlatBuffer(SwShGiftEncounterArchive arc) {
+        // Need space for root object size (including its vtable), gift encounter vtable, and all gift encounters
+        int sizeRequired = 0x94 + 0x3C + arc.giftEncountersLength() * 0x40;
+        byte[] data = new byte[sizeRequired];
+
+        // The following is the same as in the original flatbuffer
+        data[0] = 0xC;  // Offset to root object
+        data[6] = 6;    // Beginning of root object vtable - vtable size
+        data[8] = 8;    // Root object inline size
+        data[0xA] = 4;  // Offset to gift encounter array within root object
+        data[0xC] = 6;  // Beginning of root object - offset to vtable (negative direction)
+        data[0x10] = 4; // Pointer to gift encounter array
+        FileFunctions.writeFullInt(data,0x14,arc.giftEncountersLength());  // Beginning of gift encounter array - element count
+
+        // Add the offsets to the array objects, as well as the objects themselves
+        for (int i = 0; i < arc.giftEncountersLength(); i++) {
+            // In memory, the array objects are stored in reverse order because Google said so
+            int pointerOffset = 0x18+(i*4);
+            FileFunctions.writeFullInt(data,pointerOffset,(sizeRequired - (i+1) * 0x40) - pointerOffset);
+            addGiftEncounterFlatBufferObject(data,arc.giftEncounters(i),0x94,sizeRequired - (i+1) * 0x40);
+        }
+        // Write vtable
+        addStaticEncounterVTable(data,0x94);
+
+        return data;
     }
 
     @Override
@@ -1068,22 +1314,265 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<StaticEncounter> getStaticPokemon() {
-        return null;
+        List<StaticEncounter> statics = new ArrayList<>();
+        try {
+            byte[] staticEncounterData = readFile(romEntry.getString("StaticPokemon"));
+            SwShStaticEncounterArchive staticArc =
+                    SwShStaticEncounterArchive.getRootAsSwShStaticEncounterArchive(ByteBuffer.wrap(staticEncounterData));
+            List<Integer> includeIndices = Arrays.stream(romEntry.arrayEntries.get("RealStaticPokemon")).boxed().collect(Collectors.toList());
+            for (int i = 0; i < staticArc.staticEncountersLength(); i++) {
+                if (!includeIndices.contains(i)) continue;
+                SwShStaticEncounter enc = staticArc.staticEncounters(i);
+                StaticEncounter se = new StaticEncounter();
+                int species = enc.species();
+                Pokemon pokemon = pokes.get(species);
+                int forme = enc.form();
+                if (forme > pokemon.cosmeticForms && forme != 30 && forme != 31) {
+                    int speciesWithForme = absolutePokeNumByBaseForme
+                            .getOrDefault(species, dummyAbsolutePokeNums)
+                            .getOrDefault(forme, 0);
+                    pokemon = pokes.get(speciesWithForme);
+                }
+                se.pkmn = pokemon;
+                se.forme = forme;
+                se.level = enc.level();
+                se.heldItem = enc.heldItem();
+                statics.add(se);
+            }
+
+            byte[] data = readFile(romEntry.getString("GiftPokemon"));
+            SwShGiftEncounterArchive giftArc =
+                    SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+            List<Integer> skipGiftIndices =
+                    Arrays.stream(romEntry.arrayEntries.get("StarterGiftIndices")).boxed().collect(Collectors.toList());
+            // Gifts
+            for (int i = 0; i < giftArc.giftEncountersLength(); i++) {
+                if (skipGiftIndices.contains(i)) {
+                    continue;
+                }
+                SwShGiftEncounter enc = giftArc.giftEncounters(i);
+                StaticEncounter se = new StaticEncounter();
+                int species = enc.species();
+                Pokemon pokemon = pokes.get(species);
+                int forme = enc.form();
+                if (forme > pokemon.cosmeticForms && forme != 30 && forme != 31) {
+                    int speciesWithForme = absolutePokeNumByBaseForme
+                            .getOrDefault(species, dummyAbsolutePokeNums)
+                            .getOrDefault(forme, 0);
+                    pokemon = pokes.get(speciesWithForme);
+                }
+                se.pkmn = pokemon;
+                se.forme = forme;
+                se.level = enc.level();
+                se.heldItem = enc.heldItem();
+                se.isEgg = enc.isEgg() != 0;
+                statics.add(se);
+            }
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+        consolidateLinkedEncounters(statics);
+        return statics;
+    }
+
+    private void consolidateLinkedEncounters(List<StaticEncounter> statics) {
+        List<StaticEncounter> encountersToRemove = new ArrayList<>();
+        for (Map.Entry<Integer, List<Integer>> entry : romEntry.linkedStaticOffsets.entrySet()) {
+            StaticEncounter baseEncounter = statics.get(entry.getKey());
+            for (int v: entry.getValue()) {
+                StaticEncounter linkedEncounter = statics.get(v);
+                baseEncounter.linkedEncounters.add(linkedEncounter);
+                encountersToRemove.add(linkedEncounter);
+            }
+        }
+        for (StaticEncounter encounter : encountersToRemove) {
+            statics.remove(encounter);
+        }
     }
 
     @Override
     public boolean setStaticPokemon(List<StaticEncounter> staticPokemon) {
-        return false;
+        try {
+            unlinkStaticEncounters(staticPokemon);
+
+            byte[] staticEncounterData = readFile(romEntry.getString("StaticPokemon"));
+            // Make forms settable for most static Pokemon
+            for (int i = 0; i < romEntry.arrayEntries.get("StaticPokemonVTables").length; i++) {
+                int newFormOffset = romEntry.arrayEntries.get("StaticPokemonNewFormOffsets")[i];
+                if (newFormOffset < 0) continue;
+                int vTableOffset = romEntry.arrayEntries.get("StaticPokemonVTables")[i];
+                staticEncounterData[vTableOffset + 0x14] = (byte)newFormOffset;
+            }
+            // Need extra space for new vtable + 4 static encounter objects
+            byte[] newStaticEncounterData = new byte[staticEncounterData.length + 0x44 + 4*0x58];
+            System.arraycopy(staticEncounterData,0,newStaticEncounterData,0,staticEncounterData.length);
+            addStaticEncounterVTable(newStaticEncounterData,staticEncounterData.length);
+            int movedStatics = 0;
+            List<Integer> staticsToMove = Arrays.stream(romEntry.arrayEntries.get("StaticPokemonWithoutPadding"))
+                    .boxed()
+                    .collect(Collectors.toList());
+            SwShStaticEncounterArchive staticArc =
+                    SwShStaticEncounterArchive.getRootAsSwShStaticEncounterArchive(ByteBuffer.wrap(newStaticEncounterData));
+
+            List<Integer> includeIndices = Arrays.stream(romEntry.arrayEntries.get("RealStaticPokemon"))
+                    .boxed()
+                    .collect(Collectors.toList());
+            Iterator<StaticEncounter> staticIter = staticPokemon.iterator();
+            for (int i = 0; i < staticArc.staticEncountersLength(); i++) {
+                if (!includeIndices.contains(i)) continue;
+                SwShStaticEncounter enc = staticArc.staticEncounters(i);
+                // Make forms settable for static Pokemon where it could not be done the easy way
+                if (staticsToMove.contains(i)) {
+                    int objectAbsOffset = staticEncounterData.length + 0x44 + movedStatics*0x58;
+                    addStaticEncounterFlatBufferObject(
+                            newStaticEncounterData,
+                            enc,
+                            staticEncounterData.length,
+                            objectAbsOffset);
+                    FileFunctions.writeFullInt(newStaticEncounterData,0x18+i*4,(objectAbsOffset - (0x18+i*4)));
+                    movedStatics++;
+                    enc = staticArc.staticEncounters(i);
+                }
+                StaticEncounter se = staticIter.next();
+                enc.mutateSpecies(se.pkmn.number);
+                enc.mutateForm(se.forme);
+                enc.mutateLevel(se.level);
+                if (se.resetMoves) {
+                    enc.mutateMove0(0);
+                    enc.mutateMove1(0);
+                    enc.mutateMove2(0);
+                    enc.mutateMove3(0);
+                }
+                enc.mutateHeldItem(se.heldItem);
+            }
+
+            // Need to rewrite this flatbuffer to make forms settable, might already have been done in setStarters
+            if (giftEncounterArchive == null) {
+                byte[] data = readFile(romEntry.getString("GiftPokemon"));
+                SwShGiftEncounterArchive oldArc =
+                        SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(data));
+                byte[] newData = constructNewGiftEncounterArchiveFlatBuffer(oldArc);
+                giftEncounterArchive =
+                        SwShGiftEncounterArchive.getRootAsSwShGiftEncounterArchive(ByteBuffer.wrap(newData));
+            }
+            List<Integer> skipGiftIndices =
+                    Arrays.stream(romEntry.arrayEntries.get("StarterGiftIndices")).boxed().collect(Collectors.toList());
+            // Gifts
+            for (int i = 0; i < giftEncounterArchive.giftEncountersLength(); i++) {
+                if (skipGiftIndices.contains(i)) {
+                    continue;
+                }
+                SwShGiftEncounter enc = giftEncounterArchive.giftEncounters(i);
+                StaticEncounter se = staticIter.next();
+                enc.mutateSpecies(se.pkmn.number);
+                enc.mutateForm(se.forme);
+                enc.mutateLevel(se.level);
+                enc.mutateHeldItem(se.heldItem);
+            }
+
+            writeFile(romEntry.getString("StaticPokemon"),staticArc.getByteBuffer().array());
+            writeFile(romEntry.getString("GiftPokemon"),giftEncounterArchive.getByteBuffer().array());
+            return true;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
+    }
+
+    private void unlinkStaticEncounters(List<StaticEncounter> statics) {
+        List<Integer> offsetsToInsert = new ArrayList<>();
+        for (Map.Entry<Integer, List<Integer>> entry : romEntry.linkedStaticOffsets.entrySet()) {
+            offsetsToInsert.addAll(entry.getValue());
+        }
+        Collections.sort(offsetsToInsert);
+        for (Integer offsetToInsert : offsetsToInsert) {
+            statics.add(offsetToInsert, new StaticEncounter());
+        }
+        for (Map.Entry<Integer, List<Integer>> entry : romEntry.linkedStaticOffsets.entrySet()) {
+            StaticEncounter baseEncounter = statics.get(entry.getKey());
+            Iterator<StaticEncounter> linkedIter = baseEncounter.linkedEncounters.iterator();
+            for (int v: entry.getValue()) {
+                statics.set(v, linkedIter.next());
+            }
+        }
+    }
+
+    private void addStaticEncounterVTable(byte[] data, int offset) {
+        FileFunctions.write2ByteInt(data,offset,0x44);     // VTable length
+        FileFunctions.write2ByteInt(data,offset+2,0x54);     // Object inline length
+        FileFunctions.write2ByteInt(data,offset+4,0x14);      // Background far type ID
+        FileFunctions.write2ByteInt(data,offset+6,0x1C);      // Background near type ID
+        FileFunctions.write2ByteInt(data,offset+8,0x4);      // EV Speed
+        FileFunctions.write2ByteInt(data,offset+0xA,0x5);    // EV Attack
+        FileFunctions.write2ByteInt(data,offset+0xC,0);    // EV Defense
+        FileFunctions.write2ByteInt(data,offset+0xE,0x6);   // EV HP
+        FileFunctions.write2ByteInt(data,offset+0x10,0);  // EV Sp.Attack
+        FileFunctions.write2ByteInt(data,offset+0x12,0);  // EV Sp.Defense
+        FileFunctions.write2ByteInt(data,offset+0x14,0x7);   // Form
+        FileFunctions.write2ByteInt(data,offset+0x16,0x8);  // Dynamax level
+        FileFunctions.write2ByteInt(data,offset+0x18,0);   // Field 0A
+        FileFunctions.write2ByteInt(data,offset+0x1A,0x24);   // Encounter ID
+        FileFunctions.write2ByteInt(data,offset+0x1C,0x9);   // Field 0C
+        FileFunctions.write2ByteInt(data,offset+0x1E,0);   // G-Max Factor
+        FileFunctions.write2ByteInt(data,offset+0x20,0x2C);   // Held Item
+        FileFunctions.write2ByteInt(data,offset+0x22,0xA);  // Level
+        FileFunctions.write2ByteInt(data,offset+0x24,0x30);  // Encounter Scenario
+        FileFunctions.write2ByteInt(data,offset+0x26,0x34);  // Species
+        FileFunctions.write2ByteInt(data,offset+0x28,0x38);  // Shiny Lock
+        FileFunctions.write2ByteInt(data,offset+0x2A,0x3C);   // Nature
+        FileFunctions.write2ByteInt(data,offset+0x2C,0xB);   // Gender
+        FileFunctions.write2ByteInt(data,offset+0x2E,0xC);   // IV Speed
+        FileFunctions.write2ByteInt(data,offset+0x30,0xD);   // IV Attack
+        FileFunctions.write2ByteInt(data,offset+0x32,0xE);   // IV Defense
+        FileFunctions.write2ByteInt(data,offset+0x34,0xF);   // IV HP
+        FileFunctions.write2ByteInt(data,offset+0x36,0x10);   // IV Sp.Attack
+        FileFunctions.write2ByteInt(data,offset+0x38,0x11);   // IV Sp.Defense
+        FileFunctions.write2ByteInt(data,offset+0x3A,0x40);   // Ability
+        FileFunctions.write2ByteInt(data,offset+0x3C,0x44);   // Move 0
+        FileFunctions.write2ByteInt(data,offset+0x3E,0x48);   // Move 1
+        FileFunctions.write2ByteInt(data,offset+0x40,0x4C);   // Move 2
+        FileFunctions.write2ByteInt(data,offset+0x42,0x50);   // Move 3
+    }
+
+    private void addStaticEncounterFlatBufferObject(byte[] data, SwShStaticEncounter enc, int vTableAbsOffset,
+                                                    int objectAbsOffset) {
+        FileFunctions.writeFullInt(data,objectAbsOffset,objectAbsOffset - vTableAbsOffset);
+        data[objectAbsOffset+4] = (byte)enc.evSpe();
+        data[objectAbsOffset+5] = (byte)enc.evAtk();
+        data[objectAbsOffset+6] = (byte)enc.evHp();
+        data[objectAbsOffset+7] = (byte)enc.form();
+        data[objectAbsOffset+8] = (byte)enc.dynamaxLevel();
+        data[objectAbsOffset+9] = (byte)enc.field0c();
+        data[objectAbsOffset+0xA] = (byte)enc.level();
+        data[objectAbsOffset+0xB] = (byte)enc.gender();
+        data[objectAbsOffset+0xC] = enc.ivSpe();
+        data[objectAbsOffset+0xD] = enc.ivAtk();
+        data[objectAbsOffset+0xE] = enc.ivDef();
+        data[objectAbsOffset+0xF] = enc.ivHp();
+        data[objectAbsOffset+0x10] = enc.ivSpa();
+        data[objectAbsOffset+0x11] = enc.ivSpd();
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x14,enc.heldItem());
+        FileFunctions.writeFullLong(data,objectAbsOffset+0x18,enc.backgroundFarTypeId());
+        FileFunctions.writeFullLong(data,objectAbsOffset+0x20,enc.backgroundNearTypeId());
+        FileFunctions.writeFullLong(data,objectAbsOffset+0x28,enc.encounterId());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x30,enc.encounterScenario());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x34,enc.species());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x38,(int)enc.shinyLock());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x3C,(int)enc.nature());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x40,enc.ability());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x44,enc.move0());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x48,enc.move1());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x4C,enc.move2());
+        FileFunctions.writeFullInt(data,objectAbsOffset+0x50,enc.move3());
     }
 
     @Override
     public boolean canChangeStaticPokemon() {
-        return false;
+        return true;
     }
 
     @Override
     public boolean hasStaticAltFormes() {
-        return false;
+        return true;
     }
 
     @Override

@@ -77,15 +77,13 @@ public final class SwShPlacementZone extends Table {
   public boolean mutateField18(long field_18) { int o = __offset(52); if (o != 0) { bb.putInt(o + bb_pos, (int)field_18); return true; } else { return false; } }
   public long field19() { int o = __offset(54); return o != 0 ? (long)bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L; }
   public boolean mutateField19(long field_19) { int o = __offset(54); if (o != 0) { bb.putInt(o + bb_pos, (int)field_19); return true; } else { return false; } }
-  public long field1a() { int o = __offset(56); return o != 0 ? (long)bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L; }
-  public boolean mutateField1a(long field_1a) { int o = __offset(56); if (o != 0) { bb.putInt(o + bb_pos, (int)field_1a); return true; } else { return false; } }
   public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder staticObjects(int j) { return staticObjects(new com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder(), j); }
-  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder staticObjects(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder obj, int j) { int o = __offset(58); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
-  public int staticObjectsLength() { int o = __offset(58); return o != 0 ? __vector_len(o) : 0; }
+  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder staticObjects(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder obj, int j) { int o = __offset(56); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
+  public int staticObjectsLength() { int o = __offset(56); return o != 0 ? __vector_len(o) : 0; }
   public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder.Vector staticObjectsVector() { return staticObjectsVector(new com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder.Vector()); }
-  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder.Vector staticObjectsVector(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder.Vector obj) { int o = __offset(58); return o != 0 ? obj.__assign(__vector(o), 4, bb) : null; }
-  public long field1c() { int o = __offset(60); return o != 0 ? (long)bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L; }
-  public boolean mutateField1c(long field_1c) { int o = __offset(60); if (o != 0) { bb.putInt(o + bb_pos, (int)field_1c); return true; } else { return false; } }
+  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder.Vector staticObjectsVector(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObjectsHolder.Vector obj) { int o = __offset(56); return o != 0 ? obj.__assign(__vector(o), 4, bb) : null; }
+  public long field1b() { int o = __offset(58); return o != 0 ? (long)bb.getInt(o + bb_pos) & 0xFFFFFFFFL : 0L; }
+  public boolean mutateField1b(long field_1b) { int o = __offset(58); if (o != 0) { bb.putInt(o + bb_pos, (int)field_1b); return true; } else { return false; } }
 
   public static int createSwShPlacementZone(FlatBufferBuilder builder,
       int metaOffset,
@@ -114,13 +112,11 @@ public final class SwShPlacementZone extends Table {
       long field_17,
       long field_18,
       long field_19,
-      long field_1a,
       int static_objectsOffset,
-      long field_1c) {
-    builder.startTable(29);
-    SwShPlacementZone.addField1c(builder, field_1c);
+      long field_1b) {
+    builder.startTable(28);
+    SwShPlacementZone.addField1b(builder, field_1b);
     SwShPlacementZone.addStaticObjects(builder, static_objectsOffset);
-    SwShPlacementZone.addField1a(builder, field_1a);
     SwShPlacementZone.addField19(builder, field_19);
     SwShPlacementZone.addField18(builder, field_18);
     SwShPlacementZone.addField17(builder, field_17);
@@ -150,7 +146,7 @@ public final class SwShPlacementZone extends Table {
     return SwShPlacementZone.endSwShPlacementZone(builder);
   }
 
-  public static void startSwShPlacementZone(FlatBufferBuilder builder) { builder.startTable(29); }
+  public static void startSwShPlacementZone(FlatBufferBuilder builder) { builder.startTable(28); }
   public static void addMeta(FlatBufferBuilder builder, int metaOffset) { builder.addOffset(0, metaOffset, 0); }
   public static void addField01(FlatBufferBuilder builder, long field01) { builder.addInt(1, (int)field01, (int)0L); }
   public static void addCritters(FlatBufferBuilder builder, int crittersOffset) { builder.addOffset(2, crittersOffset, 0); }
@@ -183,11 +179,10 @@ public final class SwShPlacementZone extends Table {
   public static void addField17(FlatBufferBuilder builder, long field17) { builder.addInt(23, (int)field17, (int)0L); }
   public static void addField18(FlatBufferBuilder builder, long field18) { builder.addInt(24, (int)field18, (int)0L); }
   public static void addField19(FlatBufferBuilder builder, long field19) { builder.addInt(25, (int)field19, (int)0L); }
-  public static void addField1a(FlatBufferBuilder builder, long field1a) { builder.addInt(26, (int)field1a, (int)0L); }
-  public static void addStaticObjects(FlatBufferBuilder builder, int staticObjectsOffset) { builder.addOffset(27, staticObjectsOffset, 0); }
+  public static void addStaticObjects(FlatBufferBuilder builder, int staticObjectsOffset) { builder.addOffset(26, staticObjectsOffset, 0); }
   public static int createStaticObjectsVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
   public static void startStaticObjectsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }
-  public static void addField1c(FlatBufferBuilder builder, long field1c) { builder.addInt(28, (int)field1c, (int)0L); }
+  public static void addField1b(FlatBufferBuilder builder, long field1b) { builder.addInt(27, (int)field1b, (int)0L); }
   public static int endSwShPlacementZone(FlatBufferBuilder builder) {
     int o = builder.endTable();
     return o;

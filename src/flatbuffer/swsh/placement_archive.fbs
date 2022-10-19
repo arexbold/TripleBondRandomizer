@@ -94,9 +94,8 @@ table SwShPlacementZone {
     field_17:uint;
     field_18:uint;
     field_19:uint;
-    field_1a:uint;
     static_objects:[SwShPlacementStaticObjectsHolder];
-    field_1c:uint;
+    field_1b:uint;
 }
 
 table SwShPlacementZoneMeta {
@@ -202,7 +201,7 @@ table SwShPlacementHiddenItemData {
 }
 
 table SwShPlacementStaticObjectsHolder {
-    object:[SwShPlacementStaticObject];
+    object:SwShPlacementStaticObject;
 }
 
 table SwShPlacementStaticObject {

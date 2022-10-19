@@ -37,6 +37,9 @@ public class Encounter {
 
     // Used only in Gen 8
     public int probability;
+    public int wandererIndex = -1;
+    public byte modificationState = UNMODIFIED;
+    public static byte UNMODIFIED = 0, POKEMON_MODIFIED = 1, LEVELS_MODIFIED = 2, DATA_WRITTEN = 3;
 
     public String toString() {
         if (pokemon == null) {

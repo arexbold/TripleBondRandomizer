@@ -41,7 +41,7 @@ table SwShStaticEncounter {
     field_0a:int;
     encounter_id:ulong;
     field_0c:ubyte;
-    can_gigantamax:bool;
+    gmax_factor:bool;
     held_item:int;
     level:ubyte;
     encounter_scenario:SwShScenario;

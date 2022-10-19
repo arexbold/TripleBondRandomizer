@@ -735,6 +735,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                     pickablePokemon.removeAll(area.bannedPokemon);
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     // Pick a random pokemon
                     if (pickablePokemon.size() == 0) {
                         // Only banned pokes are left, ignore them and pick
@@ -780,6 +781,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                             }
                         }
                     }
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         } else if (typeThemed) {
@@ -810,12 +812,14 @@ public abstract class AbstractRomHandler implements RomHandler {
                     throw new RandomizationException("Could not randomize an area in a reasonable amount of attempts.");
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     // Pick a random themed pokemon
                     enc.pokemon = possiblePokemon.get(this.random.nextInt(possiblePokemon.size()));
                     while (enc.pokemon.actuallyCosmetic) {
                         enc.pokemon = possiblePokemon.get(this.random.nextInt(possiblePokemon.size()));
                     }
                     setFormeForEncounter(enc, enc.pokemon);
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         } else if (usePowerLevels) {
@@ -835,6 +839,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                     localAllowed.removeAll(area.bannedPokemon);
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     if (balanceShakingGrass) {
                         if (area.displayName.contains("Shaking")) {
                             enc.pokemon = pickWildPowerLvlReplacement(localAllowed, enc.pokemon, false, null, (enc.level + enc.maxLevel) / 2);
@@ -856,22 +861,27 @@ public abstract class AbstractRomHandler implements RomHandler {
                         }
                         setFormeForEncounter(enc, enc.pokemon);
                     }
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         } else {
             // Entirely random
             for (EncounterSet area : scrambledEncounters) {
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     enc.pokemon = pickEntirelyRandomPokemon(allowAltFormes, noLegendaries, area, banned);
                     setFormeForEncounter(enc, enc.pokemon);
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         }
         if (levelModifier != 0) {
             for (EncounterSet area : currentEncounters) {
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.LEVELS_MODIFIED) continue;
                     enc.level = Math.min(100, (int) Math.round(enc.level * (1 + levelModifier / 100.0)));
                     enc.maxLevel = Math.min(100, (int) Math.round(enc.maxLevel * (1 + levelModifier / 100.0)));
+                    enc.modificationState = Encounter.LEVELS_MODIFIED;
                 }
             }
         }
@@ -989,9 +999,11 @@ public abstract class AbstractRomHandler implements RomHandler {
                     }
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     // Apply the map
                     enc.pokemon = areaMap.get(enc.pokemon);
                     setFormeForEncounter(enc, enc.pokemon);
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         } else if (typeThemed) {
@@ -1036,9 +1048,11 @@ public abstract class AbstractRomHandler implements RomHandler {
                     possiblePokemon.remove(picked);
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     // Apply the map
                     enc.pokemon = areaMap.get(enc.pokemon);
                     setFormeForEncounter(enc, enc.pokemon);
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         } else if (usePowerLevels) {
@@ -1071,9 +1085,11 @@ public abstract class AbstractRomHandler implements RomHandler {
                     usedPks.add(picked);
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     // Apply the map
                     enc.pokemon = areaMap.get(enc.pokemon);
                     setFormeForEncounter(enc, enc.pokemon);
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         } else {
@@ -1091,9 +1107,11 @@ public abstract class AbstractRomHandler implements RomHandler {
                     areaMap.put(areaPk, picked);
                 }
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                     // Apply the map
                     enc.pokemon = areaMap.get(enc.pokemon);
                     setFormeForEncounter(enc, enc.pokemon);
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
             }
         }
@@ -1101,8 +1119,10 @@ public abstract class AbstractRomHandler implements RomHandler {
         if (levelModifier != 0) {
             for (EncounterSet area : currentEncounters) {
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.LEVELS_MODIFIED) continue;
                     enc.level = Math.min(100, (int) Math.round(enc.level * (1 + levelModifier / 100.0)));
                     enc.maxLevel = Math.min(100, (int) Math.round(enc.maxLevel * (1 + levelModifier / 100.0)));
+                    enc.modificationState = Encounter.LEVELS_MODIFIED;
                 }
             }
         }
@@ -1198,6 +1218,7 @@ public abstract class AbstractRomHandler implements RomHandler {
 
         for (EncounterSet area : currentEncounters) {
             for (Encounter enc : area.encounters) {
+                if (enc.modificationState == Encounter.POKEMON_MODIFIED) continue;
                 // Apply the map
                 enc.pokemon = translateMap.get(enc.pokemon);
                 if (area.bannedPokemon.contains(enc.pokemon)) {
@@ -1222,6 +1243,7 @@ public abstract class AbstractRomHandler implements RomHandler {
                         int picked = this.random.nextInt(tempPickable.size());
                         enc.pokemon = tempPickable.get(picked);
                     }
+                    enc.modificationState = Encounter.POKEMON_MODIFIED;
                 }
                 setFormeForEncounter(enc, enc.pokemon);
             }
@@ -1229,8 +1251,10 @@ public abstract class AbstractRomHandler implements RomHandler {
         if (levelModifier != 0) {
             for (EncounterSet area : currentEncounters) {
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.LEVELS_MODIFIED) continue;
                     enc.level = Math.min(100, (int) Math.round(enc.level * (1 + levelModifier / 100.0)));
                     enc.maxLevel = Math.min(100, (int) Math.round(enc.maxLevel * (1 + levelModifier / 100.0)));
+                    enc.modificationState = Encounter.LEVELS_MODIFIED;
                 }
             }
         }
@@ -1248,8 +1272,10 @@ public abstract class AbstractRomHandler implements RomHandler {
         if (levelModifier != 0) {
             for (EncounterSet area : currentEncounters) {
                 for (Encounter enc : area.encounters) {
+                    if (enc.modificationState == Encounter.LEVELS_MODIFIED) continue;
                     enc.level = Math.min(100, (int) Math.round(enc.level * (1 + levelModifier / 100.0)));
                     enc.maxLevel = Math.min(100, (int) Math.round(enc.maxLevel * (1 + levelModifier / 100.0)));
+                    enc.modificationState = Encounter.LEVELS_MODIFIED;
                 }
             }
             setEncounters(true, currentEncounters);

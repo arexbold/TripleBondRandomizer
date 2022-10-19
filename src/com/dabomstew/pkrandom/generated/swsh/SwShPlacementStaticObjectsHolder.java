@@ -16,11 +16,8 @@ public final class SwShPlacementStaticObjectsHolder extends Table {
   public void __init(int _i, ByteBuffer _bb) { __reset(_i, _bb); }
   public SwShPlacementStaticObjectsHolder __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject object(int j) { return object(new com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject(), j); }
-  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject object(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject obj, int j) { int o = __offset(4); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
-  public int objectLength() { int o = __offset(4); return o != 0 ? __vector_len(o) : 0; }
-  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject.Vector objectVector() { return objectVector(new com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject.Vector()); }
-  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject.Vector objectVector(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject.Vector obj) { int o = __offset(4); return o != 0 ? obj.__assign(__vector(o), 4, bb) : null; }
+  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject object() { return object(new com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject()); }
+  public com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject object(com.dabomstew.pkrandom.generated.swsh.SwShPlacementStaticObject obj) { int o = __offset(4); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }
 
   public static int createSwShPlacementStaticObjectsHolder(FlatBufferBuilder builder,
       int objectOffset) {
@@ -31,8 +28,6 @@ public final class SwShPlacementStaticObjectsHolder extends Table {
 
   public static void startSwShPlacementStaticObjectsHolder(FlatBufferBuilder builder) { builder.startTable(1); }
   public static void addObject(FlatBufferBuilder builder, int objectOffset) { builder.addOffset(0, objectOffset, 0); }
-  public static int createObjectVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
-  public static void startObjectVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }
   public static int endSwShPlacementStaticObjectsHolder(FlatBufferBuilder builder) {
     int o = builder.endTable();
     return o;
