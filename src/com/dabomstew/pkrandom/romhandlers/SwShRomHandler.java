@@ -411,6 +411,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     }
 
     @Override
+    public boolean supportsStarterHeldItems() {
+        return true;
+    }
+
+    @Override
     public List<Integer> getStarterHeldItems() {
         List<Integer> starterHeldItems = new ArrayList<>();
         try {

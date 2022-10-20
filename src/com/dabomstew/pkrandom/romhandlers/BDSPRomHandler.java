@@ -107,6 +107,11 @@ public class BDSPRomHandler extends AbstractSwitchRomHandler {
     }
 
     @Override
+    public boolean supportsStarterHeldItems() {
+        return false;
+    }
+
+    @Override
     public List<Integer> getStarterHeldItems() {
         return null;
     }
