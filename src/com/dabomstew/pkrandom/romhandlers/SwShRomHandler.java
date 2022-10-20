@@ -1680,12 +1680,51 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public Map<Pokemon, boolean[]> getTMHMCompatibility() {
-        return null;
+        try {
+            Map<Pokemon, boolean[]> compat = new TreeMap<>();
+            byte[] personalInfo = this.readFile(romEntry.getString("PokemonStats"));
+            for (Map.Entry<Integer, Pokemon> pokeEntry: pokes.entrySet()) {
+                byte[] pokeData = new byte[SwShConstants.bsSize];
+                int i = pokeEntry.getKey();
+                System.arraycopy(personalInfo, i * SwShConstants.bsSize, pokeData, 0, SwShConstants.bsSize);
+                Pokemon pkmn = pokes.get(i);
+                boolean[] flags = new boolean[SwShConstants.tmCount + SwShConstants.trCount + 1];
+                for (int j = 0; j < 13; j++) {
+                    readByteIntoFlags(pokeData, flags, j * 8 + 1, SwShConstants.bsTMCompatOffset + j);
+                }
+                for (int j = 0; j < 13; j++) {
+                    readByteIntoFlags(pokeData, flags, j * 8 + SwShConstants.tmCount + 1, SwShConstants.bsTRCompatOffset + j);
+                }
+                compat.put(pkmn, flags);
+            }
+            return compat;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public void setTMHMCompatibility(Map<Pokemon, boolean[]> compatData) {
-
+        try {
+            byte[] personalInfo = this.readFile(romEntry.getString("PokemonStats"));
+            for (Map.Entry<Integer, Pokemon> pokeEntry: pokes.entrySet()) {
+                byte[] pokeData = new byte[SwShConstants.bsSize];
+                int i = pokeEntry.getKey();
+                System.arraycopy(personalInfo, i * SwShConstants.bsSize, pokeData, 0, SwShConstants.bsSize);
+                Pokemon key = pokeEntry.getValue();
+                boolean[] flags = compatData.get(key);
+                for (int j = 0; j < 13; j++) {
+                    pokeData[SwShConstants.bsTMCompatOffset + j] = getByteFromFlags(flags, j * 8 + 1);
+                }
+                for (int j = 0; j < 13; j++) {
+                    pokeData[SwShConstants.bsTRCompatOffset + j] = getByteFromFlags(flags, j * 8 + SwShConstants.tmCount + 1);
+                }
+                System.arraycopy(pokeData, 0, personalInfo, i * SwShConstants.bsSize, SwShConstants.bsSize);
+            }
+            writeFile(romEntry.getString("PokemonStats"), personalInfo);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
@@ -2165,12 +2204,14 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Integer> getFieldMoves() {
-        return null;
+        // SwSh does not have field moves
+        return new ArrayList<>();
     }
 
     @Override
     public List<Integer> getEarlyRequiredHMMoves() {
-        return null;
+        // SwSh does not have any HMs
+        return new ArrayList<>();
     }
 
     @Override
@@ -2342,7 +2383,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 }
                 Pokemon thisPokemon = new Pokemon();
                 thisPokemon.number = i;
-                loadBasicPokeStats(thisPokemon,thisEntry,formeMappings);
+                loadBasicPokeStats(thisPokemon, thisEntry, formeMappings);
                 thisPokemon.name = pokeNames[i];
                 pokes.put(i,thisPokemon);
             }
@@ -2362,7 +2403,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 if ((thisEntry[SwShConstants.bsPresentFlag] & SwShConstants.presentBitMask) == 0) {
                     continue;   // This Pokemon is not present in the game
                 }
-                loadBasicPokeStats(thisPokemon, thisEntry,formeMappings);
+                loadBasicPokeStats(thisPokemon, thisEntry, formeMappings);
                 FormeInfo fi = formeMappings.get(k);
                 int realBaseForme = pokes.get(fi.baseForme).baseForme == null ? fi.baseForme : pokes.get(fi.baseForme).baseForme.number;
                 thisPokemon.name = pokeNames[realBaseForme];
@@ -2782,9 +2823,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     }
 
     private void savePokemonStats() {
-
         try {
-            byte[] personalInfo = this.readFile("bin/pml/personal/personal_total.bin");
+            byte[] personalInfo = this.readFile(romEntry.getString("PokemonStats"));
             for (Map.Entry<Integer,Pokemon> pokeEntry: pokes.entrySet()) {
                 byte[] pokeData = new byte[SwShConstants.bsSize];
                 int i = pokeEntry.getKey();
@@ -2792,7 +2832,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                 saveBasicPokeStats(pokeEntry.getValue(), pokeData);
                 System.arraycopy(pokeData, 0, personalInfo, i * SwShConstants.bsSize, SwShConstants.bsSize);
             }
-            writeFile("bin/pml/personal/personal_total.bin", personalInfo);
+            writeFile(romEntry.getString("PokemonStats"), personalInfo);
         } catch (IOException e) {
             throw new RandomizerIOException(e);
         }
@@ -2877,7 +2917,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     FileFunctions.write2ByteInt(evoEntry, evosWritten * 8 + 6, 0);
                     evosWritten++;
                 }
-                writeFile(String.format("bin/pml/evolution/evo_%03d.bin",pokeEntry.getKey()),evoEntry);
+                writeFile(String.format(romEntry.getString("EvolutionEntryTemplate"),pokeEntry.getKey()),evoEntry);
             }
 
         } catch (IOException e) {

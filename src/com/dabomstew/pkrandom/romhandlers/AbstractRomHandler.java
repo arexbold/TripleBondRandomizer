@@ -4553,6 +4553,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         this.setTMHMCompatibility(compat);
     }
 
+    // TODO: move list is 0-indexed, but compat list is 1-indexed. Make these consistent.
     private void randomizePokemonMoveCompatibility(Pokemon pkmn, boolean[] moveCompatibilityFlags,
                                                    List<Integer> moveIDs, List<Integer> prioritizedMoves,
                                                    boolean preferSameType) {

@@ -20,8 +20,8 @@ public class SwShConstants {
             bsCatchRateOffset = 8, bsCommonHeldItemOffset = 12, bsRareHeldItemOffset = 14,
             bsVeryRareHeldItemOffset = 16, bsGenderOffset = 18, bsGrowthCurveOffset = 21, bsAbility1Offset = 24,
             bsAbility2Offset = 26, bsAbility3Offset = 28, bsFormeOffset = 30, bsFormeSpriteOffset = 30, // ???
-            bsFormeCountOffset = 32, bsPresentFlag = 33, bsTMHMCompatOffset = 40, bsSpecialMTCompatOffset = 56,
-            bsMTCompatOffset = 60;
+            bsFormeCountOffset = 32, bsPresentFlag = 33, bsTMCompatOffset = 40, bsSpecialMTCompatOffset = 56,
+            bsTRCompatOffset = 60, bsMTCompatOffset = 168;
 
     public static final int presentBitMask = 0x40;
 

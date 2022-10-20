@@ -148,6 +148,21 @@ public abstract class AbstractSwitchRomHandler extends AbstractRomHandler {
         fileReader.writeFile(location, data);
     }
 
+    protected void readByteIntoFlags(byte[] data, boolean[] flags, int offsetIntoFlags, int offsetIntoData) {
+        int thisByte = data[offsetIntoData] & 0xFF;
+        for (int i = 0; i < 8 && (i + offsetIntoFlags) < flags.length; i++) {
+            flags[offsetIntoFlags + i] = ((thisByte >> i) & 0x01) == 0x01;
+        }
+    }
+
+    protected byte getByteFromFlags(boolean[] flags, int offsetIntoFlags) {
+        int thisByte = 0;
+        for (int i = 0; i < 8 && (i + offsetIntoFlags) < flags.length; i++) {
+            thisByte |= (flags[offsetIntoFlags + i] ? 1 : 0) << i;
+        }
+        return (byte) thisByte;
+    }
+
     protected int createCmpInstruction(int register, int immediate, boolean is64Bit) {
         long instruction = 0x7100001F;
         if (is64Bit) {
