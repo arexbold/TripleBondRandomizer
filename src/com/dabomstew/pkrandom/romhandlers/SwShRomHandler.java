@@ -2178,6 +2178,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         int available = 0;
         available |= MiscTweak.FASTEST_TEXT.getValue();
         available |= MiscTweak.RETAIN_ALT_FORMES.getValue();
+        available |= MiscTweak.NO_FORCED_EXP_SHARE.getValue();
         return available;
     }
 
@@ -2187,6 +2188,8 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             applyFastestText();
         } else if (tweak == MiscTweak.RETAIN_ALT_FORMES) {
             patchFormeReversion();
+        } else if (tweak == MiscTweak.NO_FORCED_EXP_SHARE) {
+            disableForcedExpShare();
         }
     }
 
@@ -2231,6 +2234,19 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             FileFunctions.writeFullInt(main, offset, createCmpInstruction(20, 9999, false));
             FileFunctions.writeFullInt(main, offset + 32, createCmpInstruction(20, 9999, false));
             FileFunctions.writeFullInt(main, offset + 40, createCmpInstruction(20, 9999, false));
+        }
+    }
+
+    private void disableForcedExpShare() {
+        int offset = find(main, SwShConstants.expSharePrefix);
+        if (offset > 0) {
+            offset += SwShConstants.expSharePrefix.length() / 2; // because it was a prefix
+
+            // There's a function in SwSh that controls whether EXP Share is enabled or disabled. However,
+            // this is basically a leftover from the older games, and all it does is simply return 1. We
+            // can disable this by simply returning 0 instead.
+            int patchedInstruction = createMovzInstruction(0, 0, false);
+            FileFunctions.writeFullInt(main, offset, patchedInstruction);
         }
     }
 

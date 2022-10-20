@@ -49,6 +49,8 @@ public class SwShConstants {
 
     public static final String saveLoadFormeReversionPrefix = "D3E00315AAE2031FAA", afterBattleFormeReversionLocator = "9FAA0B71";
 
+    public static final String expSharePrefix = "1FD67F0200F9FD7B42A9F44F41A9F50743F8C0035FD6";
+
     public static final Type[] typeTable = constructTypeTable();
 
     private static Type[] constructTypeTable() {

@@ -302,6 +302,7 @@ public class NewRandomizerGUI {
     private JCheckBox miscDisableLowHPMusicCheckBox;
     private JCheckBox miscGuaranteedPokemonCatchingCheckBox;
     private JButton openExtractedFileSystemButton;
+    private JCheckBox miscNoForcedExpShareCheckBox;
 
     private static JFrame frame;
 
@@ -1254,6 +1255,10 @@ public class NewRandomizerGUI {
             }
         }
 
+    }
+
+    private void createUIComponents() {
+        // TODO: place custom component creation code here
     }
 
 
