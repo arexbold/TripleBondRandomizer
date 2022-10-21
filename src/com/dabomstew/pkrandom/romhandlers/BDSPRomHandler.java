@@ -492,6 +492,11 @@ public class BDSPRomHandler extends AbstractSwitchRomHandler {
     }
 
     @Override
+    public void enableGuaranteedPokemonCatching() {
+        // do nothing for now
+    }
+
+    @Override
     public String getROMName() {
         return "Pokemon BDSP";
     }

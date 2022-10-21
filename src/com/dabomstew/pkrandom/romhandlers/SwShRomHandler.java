@@ -2292,6 +2292,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
     }
 
     @Override
+    public void enableGuaranteedPokemonCatching() {
+        // do nothing for now
+    }
+
+    @Override
     public String getROMName() {
         return "Pokemon " + romEntry.name;
     }

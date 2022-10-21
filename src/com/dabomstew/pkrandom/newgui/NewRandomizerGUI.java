@@ -300,7 +300,6 @@ public class NewRandomizerGUI {
     private JCheckBox paEnsureTwoAbilitiesCheckbox;
     private JCheckBox miscUpdateRotomFormeTypingCheckBox;
     private JCheckBox miscDisableLowHPMusicCheckBox;
-    private JCheckBox miscGuaranteedPokemonCatchingCheckBox;
     private JButton openExtractedFileSystemButton;
     private JCheckBox miscNoForcedExpShareCheckBox;
 
