@@ -1825,7 +1825,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public List<Integer> getEvolutionItems() {
-        List<Integer> evolutionItems = SwShConstants.evolutionItems;
+        List<Integer> evolutionItems = new ArrayList<>(SwShConstants.evolutionItems);
         for (List<Integer> dupes: SwShConstants.duplicateEvolutionItems) {
             evolutionItems.add(dupes.get(this.random.nextInt(dupes.size())));
         }
@@ -1960,22 +1960,61 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public boolean hasShopRandomization() {
-        return false;
+        return true;
     }
 
     @Override
     public Map<Integer, Shop> getShopItems() {
-        return null;
+        Map<Integer, Shop> shopItemsMap = new TreeMap<>();
+        try {
+            byte[] shopData = readFile(romEntry.getString("ShopItems"));
+            SwShShopInventory shops = SwShShopInventory.getRootAsSwShShopInventory(ByteBuffer.wrap(shopData));
+            for (int i = 0; i < shops.shop1Length(); i++) {
+                SwShShop1 shop1 = shops.shop1(i);
+                String shopName = SwShConstants.getShopName(shop1.hash());
+                if (shopName == null) continue;
+                SwShInventory inventory = shop1.inventory();
+                Shop shop = new Shop();
+                shop.name = shopName;
+                shop.isMainGame = true;
+                List<Integer> items = new ArrayList<>();
+                for (int j = 0; j < inventory.itemsLength(); j++) {
+                    items.add(inventory.items(j));
+                }
+                shop.items = items;
+                shopItemsMap.put(i,shop);
+            }
+            return shopItemsMap;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public void setShopItems(Map<Integer, Shop> shopItems) {
-
+        try {
+            byte[] shopData = readFile(romEntry.getString("ShopItems"));
+            SwShShopInventory shops = SwShShopInventory.getRootAsSwShShopInventory(ByteBuffer.wrap(shopData));
+            for (int shopIndex: shopItems.keySet()) {
+                SwShInventory inventory = shops.shop1(shopIndex).inventory();
+                Shop shop = shopItems.get(shopIndex);
+                for (int i = 0; i < shop.items.size(); i++) {
+                    inventory.mutateItems(i,shop.items.get(i));
+                }
+            }
+            writeFile(romEntry.getString("ShopItems"),shops.getByteBuffer().array());
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public void setShopPrices() {
-
+        for (int itemIndex: itemTable.keySet()) {
+            Integer balancedItemPrice = SwShConstants.balancedItemPrices.get(itemIndex);
+            if (balancedItemPrice == null) continue;
+            itemTable.get(itemIndex).price = balancedItemPrice;
+        }
     }
 
     public List<Integer> getFieldItems() {

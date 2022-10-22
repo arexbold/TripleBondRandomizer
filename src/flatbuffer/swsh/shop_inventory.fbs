@@ -1,0 +1,22 @@
+namespace com.dabomstew.pkrandom.generated.swsh;
+
+table SwShShopInventory {
+    shop1:[SwShShop1];
+    shop2:[SwShShop2];
+}
+
+table SwShShop1 {
+    hash:ulong;
+    inventory:SwShInventory;
+}
+
+table SwShShop2 {
+    hash:ulong;
+    inventories:[SwShInventory];
+}
+
+table SwShInventory {
+    items:[int];
+}
+
+root_type SwShShopInventory;
