@@ -2332,7 +2332,17 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void enableGuaranteedPokemonCatching() {
-        // do nothing for now
+        int offset = find(main, SwShConstants.perfectOddsBranchLocator);
+        if (offset > 0) {
+            // The game checks to see if your odds are greater then or equal to 255 using the following
+            // code. Note that they compare to 0xFF000 instead of 0xFF; it looks like all catching code
+            // probabilities are shifted like this to avoid rounding errors.
+            // cmp w20, #0xff, LSL #12
+            // b.lt oddsLessThanOrEqualTo254
+            // The below code just nops the branch out so it always acts like our odds are 255, and
+            // Pokemon are automatically caught no matter what.
+            FileFunctions.writeFullInt(main, offset, createNopInstruction());
+        }
     }
 
     @Override
