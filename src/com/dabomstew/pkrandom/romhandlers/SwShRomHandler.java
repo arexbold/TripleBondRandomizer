@@ -8,6 +8,7 @@ import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
 import com.dabomstew.pkrandom.hac.AHTB;
+import com.dabomstew.pkrandom.hac.BNTX;
 import com.dabomstew.pkrandom.hac.GFPack;
 import com.dabomstew.pkrandom.hac.SwitchFileReader;
 import com.dabomstew.pkrandom.pokemon.*;
@@ -2377,7 +2378,14 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public BufferedImage getMascotImage() {
-        return null;
+        try {
+            String randomIcon = SwShConstants.pokeIcons.get(this.random.nextInt(SwShConstants.pokeIcons.size()));
+            byte[] iconData = readFile(String.format(romEntry.getString("PokeIconTemplate"), randomIcon));
+            BNTX icon = new BNTX(iconData);
+            return icon.getImage();
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
