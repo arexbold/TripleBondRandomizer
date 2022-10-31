@@ -600,11 +600,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
         List<EncounterSet> encounters = new ArrayList<>();
         try  {
             final int NUM_WEATHER_TABLES = 9;
-            byte[] wildPackData = this.readFile(romEntry.getString("WildPokemonPack"));
-            GFPack wildPack = new GFPack(wildPackData);
+            byte[] fieldData = this.readFile(romEntry.getString("FieldDataPack"));
+            GFPack fieldDataPack = new GFPack(fieldData);
 
-            byte[] wildData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
-            byte[] symbolData = wildPack.getDataFileName(romEntry.getString("SymbolPokemonFile"));
+            byte[] wildData = fieldDataPack.getDataFileName(romEntry.getString("WildPokemonFile"));
+            byte[] symbolData = fieldDataPack.getDataFileName(romEntry.getString("SymbolPokemonFile"));
 
             SwShWildEncounterArchive wildArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(wildData));
             SwShWildEncounterArchive symbolArchive = SwShWildEncounterArchive.getRootAsSwShWildEncounterArchive(ByteBuffer.wrap(symbolData));
@@ -856,11 +856,11 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
         try  {
             final int NUM_WEATHER_TABLES = 9;
-            byte[] wildPackData = this.readFile(romEntry.getString("WildPokemonPack"));
-            GFPack wildPack = new GFPack(wildPackData);
+            byte[] fieldData = this.readFile(romEntry.getString("FieldDataPack"));
+            GFPack fieldDataPack = new GFPack(fieldData);
 
-            byte[] wildData = wildPack.getDataFileName(romEntry.getString("WildPokemonFile"));
-            byte[] symbolData = wildPack.getDataFileName(romEntry.getString("SymbolPokemonFile"));
+            byte[] wildData = fieldDataPack.getDataFileName(romEntry.getString("WildPokemonFile"));
+            byte[] symbolData = fieldDataPack.getDataFileName(romEntry.getString("SymbolPokemonFile"));
             byte[] staticEncounterData = readFile(romEntry.getString("StaticPokemon"));
 
             // Make forms settable
@@ -958,9 +958,9 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                     }
                 }
             }
-            wildPack.setDataFileName(romEntry.getString("WildPokemonFile"),wildArchive.getByteBuffer().array());
-            wildPack.setDataFileName(romEntry.getString("SymbolPokemonFile"),symbolArchive.getByteBuffer().array());
-            writeFile(romEntry.getString("WildPokemonPack"),wildPack.writePack());
+            fieldDataPack.setDataFileName(romEntry.getString("WildPokemonFile"),wildArchive.getByteBuffer().array());
+            fieldDataPack.setDataFileName(romEntry.getString("SymbolPokemonFile"),symbolArchive.getByteBuffer().array());
+            writeFile(romEntry.getString("FieldDataPack"),fieldDataPack.writePack());
             writeFile(romEntry.getString("StaticPokemon"),staticArc.getByteBuffer().array());
         } catch (IOException e) {
             throw new RandomizerIOException(e);
@@ -2015,6 +2015,48 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             Integer balancedItemPrice = SwShConstants.balancedItemPrices.get(itemIndex);
             if (balancedItemPrice == null) continue;
             itemTable.get(itemIndex).price = balancedItemPrice;
+        }
+    }
+
+    @Override
+    public List<PickupItem> getPickupItems() {
+        List<PickupItem> pickupItems = new ArrayList<>();
+        try {
+            byte[] fieldData = this.readFile(romEntry.getString("FieldDataPack"));
+            GFPack fieldDataPack = new GFPack(fieldData);
+            byte[] pickupData = fieldDataPack.getDataFileName(romEntry.getString("PickupItemFile"));
+            int numberOfPickupItems = FileFunctions.readFullInt(pickupData, 0x3C);
+            for (int i = 0; i < numberOfPickupItems; i++) {
+                int offsetOfOffset = 0x40 + (4 * i);
+                int offset = FileFunctions.readFullInt(pickupData, offsetOfOffset) + 0x44 + (4 * i);
+                int item = FileFunctions.readFullInt(pickupData, offset);
+                PickupItem pickupItem = new PickupItem(item);
+                for (int levelRange = 0; levelRange < 10; levelRange++) {
+                    pickupItem.probabilities[levelRange] = FileFunctions.readFullInt(pickupData, offset + 12 + (levelRange * 4));
+                }
+                pickupItems.add(pickupItem);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return pickupItems;
+    }
+
+    @Override
+    public void setPickupItems(List<PickupItem> pickupItems) {
+        try {
+            byte[] fieldData = this.readFile(romEntry.getString("FieldDataPack"));
+            GFPack fieldDataPack = new GFPack(fieldData);
+            byte[] pickupData = fieldDataPack.getDataFileName(romEntry.getString("PickupItemFile"));
+            for (int i = 0; i < pickupItems.size(); i++) {
+                int offsetOfOffset = 0x40 + (4 * i);
+                int offset = FileFunctions.readFullInt(pickupData, offsetOfOffset) + 0x44 + (4 * i);
+                FileFunctions.writeFullInt(pickupData, offset, pickupItems.get(i).item);
+            }
+            fieldDataPack.setDataFileName(romEntry.getString("PickupItemFile"), pickupData);
+            writeFile(romEntry.getString("FieldDataPack"), fieldDataPack.writePack());
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
         }
     }
 
