@@ -2363,7 +2363,100 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void removeTimeBasedEvolutions() {
-
+        Set<Evolution> extraEvolutions = new HashSet<>();
+        for (Pokemon pkmn : pokes.values()) {
+            if (pkmn != null) {
+                extraEvolutions.clear();
+                for (Evolution evo : pkmn.evolutionsFrom) {
+                    if (evo.type == EvolutionType.HAPPINESS_DAY) {
+                        if (evo.from.number == Species.eevee) {
+                            // We can't set Eevee to evolve into Espeon with happiness at night because that's how
+                            // Umbreon works in the original game. Instead, make Eevee: == sun stone => Espeon
+                            evo.type = EvolutionType.STONE;
+                            evo.extraInfo = Items.sunStone;
+                            addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
+                        } else {
+                            // Add an extra evo for Happiness at Night
+                            addEvoUpdateHappiness(timeBasedEvolutionUpdates, evo);
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.HAPPINESS_NIGHT, 0);
+                            extraEntry.forme = evo.forme;
+                            extraEvolutions.add(extraEntry);
+                        }
+                    } else if (evo.type == EvolutionType.HAPPINESS_NIGHT) {
+                        if (evo.from.number == Species.eevee) {
+                            // We can't set Eevee to evolve into Umbreon with happiness at day because that's how
+                            // Espeon works in the original game. Instead, make Eevee: == moon stone => Umbreon
+                            evo.type = EvolutionType.STONE;
+                            evo.extraInfo = Items.moonStone;
+                            addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
+                        } else {
+                            // Add an extra evo for Happiness at Day
+                            addEvoUpdateHappiness(timeBasedEvolutionUpdates, evo);
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.HAPPINESS_DAY, 0);
+                            extraEntry.forme = evo.forme;
+                            extraEvolutions.add(extraEntry);
+                        }
+                    } else if (evo.type == EvolutionType.LEVEL_ITEM_DAY) {
+                        int item = evo.extraInfo;
+                        // Make sure we don't already have an evo for the same item at night (e.g., when using Change Impossible Evos)
+                        if (evo.from.evolutionsFrom.stream().noneMatch(e -> e.type == EvolutionType.LEVEL_ITEM_NIGHT && e.extraInfo == item)) {
+                            // Add an extra evo for Level w/ Item During Night
+                            addEvoUpdateHeldItem(timeBasedEvolutionUpdates, evo, itemNames.get(item));
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.LEVEL_ITEM_NIGHT, item);
+                            extraEntry.forme = evo.forme;
+                            extraEvolutions.add(extraEntry);
+                        }
+                    } else if (evo.type == EvolutionType.LEVEL_ITEM_NIGHT) {
+                        int item = evo.extraInfo;
+                        // Make sure we don't already have an evo for the same item at day (e.g., when using Change Impossible Evos)
+                        if (evo.from.evolutionsFrom.stream().noneMatch(e -> e.type == EvolutionType.LEVEL_ITEM_DAY && e.extraInfo == item)) {
+                            // Add an extra evo for Level w/ Item During Day
+                            addEvoUpdateHeldItem(timeBasedEvolutionUpdates, evo, itemNames.get(item));
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.LEVEL_ITEM_DAY, item);
+                            extraEntry.forme = evo.forme;
+                            extraEvolutions.add(extraEntry);
+                        }
+                    } else if (evo.type == EvolutionType.LEVEL_DAY) {
+                        if (evo.from.number == Species.rockruff) {
+                            // We can't set Rockruff to evolve into Lycanroc-Midday with level at night because that's how
+                            // Lycanroc-Midnight works in the original game. Instead, make Rockruff: == sun stone => Lycanroc-Midday
+                            evo.type = EvolutionType.STONE;
+                            evo.extraInfo = Items.sunStone;
+                            addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
+                        } else {
+                            addEvoUpdateLevel(timeBasedEvolutionUpdates, evo);
+                            evo.type = EvolutionType.LEVEL;
+                        }
+                    } else if (evo.type == EvolutionType.LEVEL_NIGHT) {
+                        if (evo.from.number == Species.rockruff) {
+                            // We can't set Rockruff to evolve into Lycanroc-Midnight with level at night because that's how
+                            // Lycanroc-Midday works in the original game. Instead, make Rockruff: == moon stone => Lycanroc-Midnight
+                            evo.type = EvolutionType.STONE;
+                            evo.extraInfo = Items.moonStone;
+                            addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
+                        } else {
+                            addEvoUpdateLevel(timeBasedEvolutionUpdates, evo);
+                            evo.type = EvolutionType.LEVEL;
+                        }
+                    } else if (evo.type == EvolutionType.LEVEL_DUSK) {
+                        // This is the Rockruff => Lycanroc-Dusk evolution. We can't set it to evolve with level at other
+                        // times because the other Lycanroc formes work like that in the original game. Instead, make
+                        // Rockruff: == dusk stone => Lycanroc-Dusk
+                        evo.type = EvolutionType.STONE;
+                        evo.extraInfo = Items.duskStone;
+                        addEvoUpdateStone(timeBasedEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
+                    }
+                }
+                pkmn.evolutionsFrom.addAll(extraEvolutions);
+                for (Evolution ev : extraEvolutions) {
+                    ev.to.evolutionsTo.add(ev);
+                }
+            }
+        }
     }
 
     @Override
