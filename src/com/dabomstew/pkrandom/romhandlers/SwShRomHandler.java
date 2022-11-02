@@ -2271,7 +2271,89 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void removeImpossibleEvolutions(Settings settings) {
+        boolean changeMoveEvos = !(settings.getMovesetsMod() == Settings.MovesetsMod.UNCHANGED);
 
+        Map<Integer, List<MoveLearnt>> movesets = this.getMovesLearnt();
+        Set<Evolution> extraEvolutions = new HashSet<>();
+        for (Pokemon pkmn : pokes.values()) {
+            if (pkmn != null) {
+                extraEvolutions.clear();
+                for (Evolution evo : pkmn.evolutionsFrom) {
+                    if (changeMoveEvos && evo.type == EvolutionType.LEVEL_WITH_MOVE) {
+                        // read move
+                        int move = evo.extraInfo;
+                        int levelLearntAt = 1;
+                        for (MoveLearnt ml : movesets.get(evo.from.number)) {
+                            if (ml.move == move) {
+                                levelLearntAt = ml.level;
+                                break;
+                            }
+                        }
+                        if (levelLearntAt == 1) {
+                            // override for piloswine
+                            levelLearntAt = 45;
+                        }
+                        // change to pure level evo
+                        evo.type = EvolutionType.LEVEL;
+                        evo.extraInfo = levelLearntAt;
+                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
+                    }
+                    // Pure Trade
+                    if (evo.type == EvolutionType.TRADE) {
+                        // Replace w/ level 37
+                        evo.type = EvolutionType.LEVEL;
+                        evo.extraInfo = 37;
+                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
+                    }
+                    // Trade w/ Item
+                    if (evo.type == EvolutionType.TRADE_ITEM) {
+                        // Get the current item & evolution
+                        int item = evo.extraInfo;
+                        if (evo.from.number == Species.slowpoke) {
+                            // Slowpoke is awkward - he already has a level evo
+                            // So we can't do Level up w/ Held Item for him
+                            // Put Water Stone instead
+                            evo.type = EvolutionType.STONE;
+                            evo.extraInfo = Items.waterStone;
+                            addEvoUpdateStone(impossibleEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
+                        } else {
+                            addEvoUpdateHeldItem(impossibleEvolutionUpdates, evo, itemNames.get(item));
+                            // Replace, for this entry, w/
+                            // Level up w/ Held Item at Day
+                            evo.type = EvolutionType.LEVEL_ITEM_DAY;
+                            // now add an extra evo for
+                            // Level up w/ Held Item at Night
+                            Evolution extraEntry = new Evolution(evo.from, evo.to, true,
+                                    EvolutionType.LEVEL_ITEM_NIGHT, item);
+                            extraEntry.forme = evo.forme;
+                            extraEvolutions.add(extraEntry);
+                        }
+                    }
+                    if (evo.type == EvolutionType.TRADE_SPECIAL) {
+                        // This is the karrablast <-> shelmet trade
+                        // Replace it with Level up w/ Other Species in Party
+                        // (22)
+                        // Based on what species we're currently dealing with
+                        evo.type = EvolutionType.LEVEL_WITH_OTHER;
+                        evo.extraInfo = (evo.from.number == Species.karrablast ? Species.shelmet : Species.karrablast);
+                        addEvoUpdateParty(impossibleEvolutionUpdates, evo, pokes.get(evo.extraInfo).fullName());
+                    }
+                    // Finish one of the Towers of the Two Fists
+                    if (evo.type == EvolutionType.TOWER) {
+                        // This is impossible if you don't own the DLC, so change to level 40
+                        evo.type = EvolutionType.LEVEL;
+                        evo.extraInfo = 40;
+                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
+                    }
+                    // TBD: Pancham, Sliggoo? Sylveon?
+                }
+
+                pkmn.evolutionsFrom.addAll(extraEvolutions);
+                for (Evolution ev : extraEvolutions) {
+                    ev.to.evolutionsTo.add(ev);
+                }
+            }
+        }
     }
 
     @Override
