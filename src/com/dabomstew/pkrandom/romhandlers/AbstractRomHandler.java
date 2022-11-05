@@ -6195,6 +6195,22 @@ public abstract class AbstractRomHandler implements RomHandler {
                 true, additional));
     }
 
+    protected void addEvoUpdateCritThreeTimes(Set<EvolutionUpdate> evolutionUpdates, Evolution evo) {
+        Pokemon pkFrom = evo.from;
+        Pokemon pkTo = evo.to;
+        int numberOfCrits = evo.extraInfo;
+        evolutionUpdates.add(new EvolutionUpdate(pkFrom, pkTo, EvolutionType.CRIT_THREE_TIMES, String.valueOf(numberOfCrits),
+                true, false));
+    }
+
+    protected void addEvoUpdateGetHurtAndWalkThroughGate(Set<EvolutionUpdate> evolutionUpdates, Evolution evo) {
+        Pokemon pkFrom = evo.from;
+        Pokemon pkTo = evo.to;
+        int amountOfDamage = evo.extraInfo;
+        evolutionUpdates.add(new EvolutionUpdate(pkFrom, pkTo, EvolutionType.GET_HURT_AND_WALK_THROUGH_A_GATE, String.valueOf(amountOfDamage),
+                true, false));
+    }
+
     private Pokemon pickEvoPowerLvlReplacement(List<Pokemon> pokemonPool, Pokemon current) {
         // start with within 10% and add 5% either direction till we find
         // something

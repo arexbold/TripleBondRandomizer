@@ -2358,7 +2358,38 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public void makeEvolutionsEasier(Settings settings) {
+        boolean wildsRandomized = !settings.getWildPokemonMod().equals(Settings.WildPokemonMod.UNCHANGED);
 
+        if (wildsRandomized) {
+            for (Pokemon pkmn : pokes.values()) {
+                if (pkmn != null) {
+                    for (Evolution evo : pkmn.evolutionsFrom) {
+                        if (evo.type == EvolutionType.LEVEL_WITH_OTHER) {
+                            // Replace w/ level 35
+                            evo.type = EvolutionType.LEVEL;
+                            evo.extraInfo = 35;
+                            addEvoUpdateCondensed(easierEvolutionUpdates, evo, false);
+                        }
+                    }
+                }
+            }
+        }
+        for (Pokemon pkmn : pokes.values()) {
+            if (pkmn != null) {
+                for (Evolution evo : pkmn.evolutionsFrom) {
+                    if (evo.type == EvolutionType.CRIT_THREE_TIMES) {
+                        // TODO: Check to see that this actually works
+                        evo.extraInfo = 1;
+                        addEvoUpdateCritThreeTimes(easierEvolutionUpdates, evo);
+                    }
+                    if (evo.type == EvolutionType.GET_HURT_AND_WALK_THROUGH_A_GATE) {
+                        // TODO: Check to see that this actually works
+                        evo.extraInfo = 0;
+                        addEvoUpdateGetHurtAndWalkThroughGate(easierEvolutionUpdates, evo);
+                    }
+                }
+            }
+        }
     }
 
     @Override

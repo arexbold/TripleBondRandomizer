@@ -65,7 +65,11 @@ public class EvolutionUpdate implements Comparable<EvolutionUpdate> {
                 return String.format("%-15s -> %-15s by leveling up holding %s", fromName, toName, extraInfo);
             case LEVEL_WITH_OTHER:
                 return String.format("%-15s -> %-15s by leveling up with %s in the party", fromName, toName, extraInfo);
-             default:
+            case CRIT_THREE_TIMES:
+                return String.format("%-15s -> %-15s by getting %s critical hit in battle", fromName, toName, extraInfo);
+            case GET_HURT_AND_WALK_THROUGH_A_GATE:
+                return String.format("%-15s -> %-15s by getting %s damage and walking through the gate in Dusty Bowl", fromName, toName, extraInfo);
+            default:
                 return "";
         }
     }
