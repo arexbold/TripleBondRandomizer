@@ -44,6 +44,8 @@ public class SwShConstants {
 
     public static final int itemPropertiesEntryLength = 0x30;
 
+    public static final int moveTutorMoveCount = 18;
+
     public static final String ninjaskSpeciesLocator = "1F8C047141", shedinjaLocator = "81248052E00313AAE2";
 
     public static final String[] fastestTextPrefixes = new String[]{"40F915F940F9B50000B4E00315AA088C44F8080940F900013FD6E00315AA", "14002945F9"};
@@ -53,6 +55,8 @@ public class SwShConstants {
     public static final String expSharePrefix = "1FD67F0200F9FD7B42A9F44F41A9F50743F8C0035FD6";
 
     public static final String perfectOddsBranchLocator = "0B010054E803003268";
+
+    public static final String moveTutorMovesPrefix = "6374696F6E00000000";
 
     public static final Type[] typeTable = constructTypeTable();
 

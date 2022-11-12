@@ -1730,17 +1730,32 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public boolean hasMoveTutors() {
-        return false;
+        return true;
     }
 
     @Override
     public List<Integer> getMoveTutorMoves() {
-        return null;
+        List<Integer> mtMoves = new ArrayList<>();
+        int offset = find(main, SwShConstants.moveTutorMovesPrefix);
+        if (offset > 0) {
+            offset += SwShConstants.moveTutorMovesPrefix.length() / 2; // because it was a prefix
+            for (int i = 0; i < SwShConstants.moveTutorMoveCount; i++) {
+                int move = FileFunctions.readFullInt(main, offset + (4 * i));
+                mtMoves.add(move);
+            }
+        }
+        return mtMoves;
     }
 
     @Override
     public void setMoveTutorMoves(List<Integer> moves) {
-
+        int offset = find(main, SwShConstants.moveTutorMovesPrefix);
+        if (offset > 0) {
+            offset += SwShConstants.moveTutorMovesPrefix.length() / 2; // because it was a prefix
+            for (int i = 0; i < SwShConstants.moveTutorMoveCount; i++) {
+                FileFunctions.writeFullInt(main, offset + (4 * i), moves.get(i));
+            }
+        }
     }
 
     @Override
