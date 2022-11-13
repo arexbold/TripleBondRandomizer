@@ -1760,12 +1760,45 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public Map<Pokemon, boolean[]> getMoveTutorCompatibility() {
-        return null;
+        try {
+            Map<Pokemon, boolean[]> compat = new TreeMap<>();
+            byte[] personalInfo = this.readFile(romEntry.getString("PokemonStats"));
+            for (Map.Entry<Integer, Pokemon> pokeEntry: pokes.entrySet()) {
+                byte[] pokeData = new byte[SwShConstants.bsSize];
+                int i = pokeEntry.getKey();
+                System.arraycopy(personalInfo, i * SwShConstants.bsSize, pokeData, 0, SwShConstants.bsSize);
+                Pokemon pkmn = pokes.get(i);
+                boolean[] flags = new boolean[SwShConstants.moveTutorMoveCount + 1];
+                for (int j = 0; j < 3; j++) {
+                    readByteIntoFlags(pokeData, flags, j * 8 + 1, SwShConstants.bsMTCompatOffset + j);
+                }
+                compat.put(pkmn, flags);
+            }
+            return compat;
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
     public void setMoveTutorCompatibility(Map<Pokemon, boolean[]> compatData) {
-
+        try {
+            byte[] personalInfo = this.readFile(romEntry.getString("PokemonStats"));
+            for (Map.Entry<Integer, Pokemon> pokeEntry: pokes.entrySet()) {
+                byte[] pokeData = new byte[SwShConstants.bsSize];
+                int i = pokeEntry.getKey();
+                System.arraycopy(personalInfo, i * SwShConstants.bsSize, pokeData, 0, SwShConstants.bsSize);
+                Pokemon key = pokeEntry.getValue();
+                boolean[] flags = compatData.get(key);
+                for (int j = 0; j < 3; j++) {
+                    pokeData[SwShConstants.bsMTCompatOffset + j] = getByteFromFlags(flags, j * 8 + 1);
+                }
+                System.arraycopy(pokeData, 0, personalInfo, i * SwShConstants.bsSize, SwShConstants.bsSize);
+            }
+            writeFile(romEntry.getString("PokemonStats"), personalInfo);
+        } catch (IOException e) {
+            throw new RandomizerIOException(e);
+        }
     }
 
     @Override
