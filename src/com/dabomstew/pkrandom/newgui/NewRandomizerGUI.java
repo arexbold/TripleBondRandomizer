@@ -1253,11 +1253,6 @@ public class NewRandomizerGUI {
                 performRandomization(fh.getAbsolutePath(), seed, pld.getCustomNames(), outputType == SaveType.DIRECTORY);
             }
         }
-
-    }
-
-    private void createUIComponents() {
-        // TODO: place custom component creation code here
     }
 
 
