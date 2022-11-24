@@ -1,9 +1,6 @@
 package com.dabomstew.pkrandom.romhandlers;
 
-import com.dabomstew.pkrandom.FileFunctions;
-import com.dabomstew.pkrandom.MiscTweak;
-import com.dabomstew.pkrandom.RomFunctions;
-import com.dabomstew.pkrandom.Settings;
+import com.dabomstew.pkrandom.*;
 import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.exceptions.RandomizerIOException;
 import com.dabomstew.pkrandom.generated.swsh.*;
@@ -38,7 +35,6 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             } catch (IOException e) {
                 throw new RandomizerIOException(e);
             }
-
         }
     }
 
@@ -109,7 +105,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                         if (r[0].equals("ContentId")) {
                             current.contentId = r[1];
                         } else if (r[0].equals("MainCRC32")) {
-                            current.mainCRC32 = parseRILong("0x" + r[1].trim());
+                            current.mainCRC32 = Utils.parseRILong("0x" + r[1].trim());
                         } else if (r[0].equals("LinkedStaticEncounterOffsets")) {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
                             for (int i = 0; i < offsets.length; i++) {
@@ -121,7 +117,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                                 current.linkedStaticOffsets.put(Integer.parseInt(parts[0].trim()),vals);
                             }
                         } else if (r[0].endsWith("Offset") || r[0].endsWith("Count") || r[0].endsWith("Number")) {
-                            int offs = parseRIInt(r[1]);
+                            int offs = Utils.parseRIInt(r[1]);
                             current.numbers.put(r[0], offs);
                         } else if (r[1].startsWith("[") && r[1].endsWith("]")) {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
@@ -131,7 +127,7 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
                                 int[] offs = new int[offsets.length];
                                 int c = 0;
                                 for (String off : offsets) {
-                                    offs[c++] = parseRIInt(off);
+                                    offs[c++] = Utils.parseRIInt(off);
                                 }
                                 current.arrayEntries.put(r[0], offs);
                             }
@@ -154,36 +150,6 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
             sc.close();
         } catch (FileNotFoundException e) {
             System.err.println("File not found!");
-        }
-    }
-
-    private static int parseRIInt(String off) {
-        int radix = 10;
-        off = off.trim().toLowerCase();
-        if (off.startsWith("0x") || off.startsWith("&h")) {
-            radix = 16;
-            off = off.substring(2);
-        }
-        try {
-            return Integer.parseInt(off, radix);
-        } catch (NumberFormatException ex) {
-            System.err.println("invalid base " + radix + "number " + off);
-            return 0;
-        }
-    }
-
-    private static long parseRILong(String off) {
-        int radix = 10;
-        off = off.trim().toLowerCase();
-        if (off.startsWith("0x") || off.startsWith("&h")) {
-            radix = 16;
-            off = off.substring(2);
-        }
-        try {
-            return Long.parseLong(off, radix);
-        } catch (NumberFormatException ex) {
-            System.err.println("invalid base " + radix + "number " + off);
-            return 0;
         }
     }
 

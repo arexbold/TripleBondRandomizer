@@ -23,10 +23,7 @@ package com.dabomstew.pkrandom.romhandlers;
 /*--  along with this program. If not, see <http://www.gnu.org/licenses/>.  --*/
 /*----------------------------------------------------------------------------*/
 
-import com.dabomstew.pkrandom.FileFunctions;
-import com.dabomstew.pkrandom.MiscTweak;
-import com.dabomstew.pkrandom.RomFunctions;
-import com.dabomstew.pkrandom.Settings;
+import com.dabomstew.pkrandom.*;
 import com.dabomstew.pkrandom.constants.*;
 import com.dabomstew.pkrandom.ctr.AMX;
 import com.dabomstew.pkrandom.ctr.BFLIM;
@@ -162,13 +159,13 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                             RomFileEntry entry = new RomFileEntry();
                             entry.path = path.trim();
                             entry.expectedCRC32s = new long[2];
-                            entry.expectedCRC32s[0] = parseRILong("0x" + crcs[0].trim());
-                            entry.expectedCRC32s[1] = parseRILong("0x" + crcs[1].trim());
+                            entry.expectedCRC32s[0] = Utils.parseRILong("0x" + crcs[0].trim());
+                            entry.expectedCRC32s[1] = Utils.parseRILong("0x" + crcs[1].trim());
                             current.files.put(key, entry);
                         } else if (r[0].equals("CodeCRC32")) {
                             String[] values = r[1].substring(1, r[1].length() - 1).split(",");
-                            current.expectedCodeCRC32s[0] = parseRILong("0x" + values[0].trim());
-                            current.expectedCodeCRC32s[1] = parseRILong("0x" + values[1].trim());
+                            current.expectedCodeCRC32s[0] = Utils.parseRILong("0x" + values[0].trim());
+                            current.expectedCodeCRC32s[1] = Utils.parseRILong("0x" + values[1].trim());
                         } else if (r[0].equals("LinkedStaticEncounterOffsets")) {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
                             for (int i = 0; i < offsets.length; i++) {
@@ -176,7 +173,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                                 current.linkedStaticOffsets.put(Integer.parseInt(parts[0].trim()), Integer.parseInt(parts[1].trim()));
                             }
                         } else if (r[0].endsWith("Offset") || r[0].endsWith("Count") || r[0].endsWith("Number")) {
-                            int offs = parseRIInt(r[1]);
+                            int offs = Utils.parseRIInt(r[1]);
                             current.numbers.put(r[0], offs);
                         } else if (r[1].startsWith("[") && r[1].endsWith("]")) {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
@@ -186,7 +183,7 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
                                 int[] offs = new int[offsets.length];
                                 int c = 0;
                                 for (String off : offsets) {
-                                    offs[c++] = parseRIInt(off);
+                                    offs[c++] = Utils.parseRIInt(off);
                                 }
                                 current.arrayEntries.put(r[0], offs);
                             }
@@ -211,36 +208,6 @@ public class Gen7RomHandler extends Abstract3DSRomHandler {
             sc.close();
         } catch (FileNotFoundException e) {
             System.err.println("File not found!");
-        }
-    }
-
-    private static int parseRIInt(String off) {
-        int radix = 10;
-        off = off.trim().toLowerCase();
-        if (off.startsWith("0x") || off.startsWith("&h")) {
-            radix = 16;
-            off = off.substring(2);
-        }
-        try {
-            return Integer.parseInt(off, radix);
-        } catch (NumberFormatException ex) {
-            System.err.println("invalid base " + radix + "number " + off);
-            return 0;
-        }
-    }
-
-    private static long parseRILong(String off) {
-        int radix = 10;
-        off = off.trim().toLowerCase();
-        if (off.startsWith("0x") || off.startsWith("&h")) {
-            radix = 16;
-            off = off.substring(2);
-        }
-        try {
-            return Long.parseLong(off, radix);
-        } catch (NumberFormatException ex) {
-            System.err.println("invalid base " + radix + "number " + off);
-            return 0;
         }
     }
 

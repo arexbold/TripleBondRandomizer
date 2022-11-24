@@ -195,14 +195,14 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                             String[] values = r[1].substring(1, r[1].length() - 1).split(",");
                             RomFileEntry entry = new RomFileEntry();
                             entry.path = values[0].trim();
-                            entry.expectedCRC32 = parseRILong("0x" + values[1].trim());
+                            entry.expectedCRC32 = Utils.parseRILong("0x" + values[1].trim());
                             current.files.put(key, entry);
                         } else if (r[0].equals("Arm9CRC32")) {
-                            current.arm9ExpectedCRC32 = parseRILong("0x" + r[1]);
+                            current.arm9ExpectedCRC32 = Utils.parseRILong("0x" + r[1]);
                         } else if (r[0].startsWith("OverlayCRC32<")) {
                             String keyString = r[0].split("<")[1].split(">")[0];
-                            int key = parseRIInt(keyString);
-                            long value = parseRILong("0x" + r[1]);
+                            int key = Utils.parseRIInt(keyString);
+                            long value = Utils.parseRILong("0x" + r[1]);
                             current.overlayExpectedCRC32s.put(key, value);
                         } else if (r[0].equals("StaticPokemon{}")) {
                             current.staticPokemon.add(parseStaticPokemon(r[1]));
@@ -218,32 +218,32 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
                             for (String off : offsets) {
                                 String[] parts = off.split("=");
-                                int tmNum = parseRIInt(parts[0]);
-                                int offset = parseRIInt(parts[1]);
+                                int tmNum = Utils.parseRIInt(parts[0]);
+                                int offset = Utils.parseRIInt(parts[1]);
                                 current.tmScriptOffsetsFrontier.put(tmNum, offset);
                             }
                         } else if (r[0].equals("FrontierTMText{}")) {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
                             for (String off : offsets) {
                                 String[] parts = off.split("=");
-                                int tmNum = parseRIInt(parts[0]);
-                                int stringNumber = parseRIInt(parts[1]);
+                                int tmNum = Utils.parseRIInt(parts[0]);
+                                int stringNumber = Utils.parseRIInt(parts[1]);
                                 current.tmTextsFrontier.put(tmNum, stringNumber);
                             }
                         } else if (r[0].equals("StaticPokemonSupport")) {
-                            int spsupport = parseRIInt(r[1]);
+                            int spsupport = Utils.parseRIInt(r[1]);
                             current.staticPokemonSupport = (spsupport > 0);
                         } else if (r[0].equals("CopyStaticPokemon")) {
-                            int csp = parseRIInt(r[1]);
+                            int csp = Utils.parseRIInt(r[1]);
                             current.copyStaticPokemon = (csp > 0);
                         } else if (r[0].equals("CopyRoamingPokemon")) {
-                            int crp = parseRIInt(r[1]);
+                            int crp = Utils.parseRIInt(r[1]);
                             current.copyRoamingPokemon = (crp > 0);
                         } else if (r[0].equals("CopyText")) {
-                            int ct = parseRIInt(r[1]);
+                            int ct = Utils.parseRIInt(r[1]);
                             current.copyText = (ct > 0);
                         } else if (r[0].equals("IgnoreGameCornerStatics")) {
-                            int ct = parseRIInt(r[1]);
+                            int ct = Utils.parseRIInt(r[1]);
                             current.ignoreGameCornerStatics = (ct > 0);
                         } else if (r[0].endsWith("Tweak")) {
                             current.tweakFiles.put(r[0], r[1]);
@@ -252,8 +252,8 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                             String[] offsets = r[1].substring(1, r[1].length() - 1).split(",");
                             for (String off : offsets) {
                                 String[] parts = off.split(":");
-                                int file = parseRIInt(parts[0]);
-                                int offset = parseRIInt(parts[1]);
+                                int file = Utils.parseRIInt(parts[0]);
+                                int offset = Utils.parseRIInt(parts[1]);
                                 ScriptEntry entry = new ScriptEntry(file, offset);
                                 current.marillCryScriptEntries.add(entry);
                             }
@@ -266,13 +266,13 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                                     int[] offs = new int[offsets.length];
                                     int c = 0;
                                     for (String off : offsets) {
-                                        offs[c++] = parseRIInt(off);
+                                        offs[c++] = Utils.parseRIInt(off);
                                     }
                                     current.arrayEntries.put(r[0], offs);
                                 }
                             } else if (r[0].endsWith("Offset") || r[0].endsWith("Count") || r[0].endsWith("Number")
                                     || r[0].endsWith("Size") || r[0].endsWith("Index")) {
-                                int offs = parseRIInt(r[1]);
+                                int offs = Utils.parseRIInt(r[1]);
                                 current.numbers.put(r[0], offs);
                             } else {
                                 current.strings.put(r[0], r[1]);
@@ -288,36 +288,6 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
 
     }
 
-    private static int parseRIInt(String off) {
-        int radix = 10;
-        off = off.trim().toLowerCase();
-        if (off.startsWith("0x") || off.startsWith("&h")) {
-            radix = 16;
-            off = off.substring(2);
-        }
-        try {
-            return Integer.parseInt(off, radix);
-        } catch (NumberFormatException ex) {
-            System.err.println("invalid base " + radix + "number " + off);
-            return 0;
-        }
-    }
-
-    private static long parseRILong(String off) {
-        int radix = 10;
-        off = off.trim().toLowerCase();
-        if (off.startsWith("0x") || off.startsWith("&h")) {
-            radix = 16;
-            off = off.substring(2);
-        }
-        try {
-            return Long.parseLong(off, radix);
-        } catch (NumberFormatException ex) {
-            System.err.println("invalid base " + radix + "number " + off);
-            return 0;
-        }
-    }
-
     private static StaticPokemon parseStaticPokemon(String staticPokemonString) {
         StaticPokemon sp = new StaticPokemon();
         String pattern = "[A-z]+=\\[([0-9]+:0x[0-9a-fA-F]+,?\\s?)+]";
@@ -329,7 +299,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
             ScriptEntry[] entries = new ScriptEntry[offsets.length];
             for (int i = 0; i < entries.length; i++) {
                 String[] parts = offsets[i].split(":");
-                entries[i] = new ScriptEntry(parseRIInt(parts[0]), parseRIInt(parts[1]));
+                entries[i] = new ScriptEntry(Utils.parseRIInt(parts[0]), Utils.parseRIInt(parts[1]));
             }
             switch (segments[0]) {
                 case "Species":
@@ -359,7 +329,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                     ScriptEntry[] speciesEntries = new ScriptEntry[offsets.length];
                     for (int i = 0; i < speciesEntries.length; i++) {
                         String[] parts = offsets[i].split(":");
-                        speciesEntries[i] = new ScriptEntry(parseRIInt(parts[0]), parseRIInt(parts[1]));
+                        speciesEntries[i] = new ScriptEntry(Utils.parseRIInt(parts[0]), Utils.parseRIInt(parts[1]));
                     }
                     sp.speciesEntries = speciesEntries;
                     break;
@@ -367,7 +337,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                     ScriptEntry[] levelEntries = new ScriptEntry[offsets.length];
                     for (int i = 0; i < levelEntries.length; i++) {
                         String[] parts = offsets[i].split(":");
-                        levelEntries[i] = new ScriptEntry(parseRIInt(parts[0]), parseRIInt(parts[1]));
+                        levelEntries[i] = new ScriptEntry(Utils.parseRIInt(parts[0]), Utils.parseRIInt(parts[1]));
                     }
                     sp.levelEntries = levelEntries;
                     break;
@@ -375,7 +345,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                     TextEntry[] textEntries = new TextEntry[offsets.length];
                     for (int i = 0; i < textEntries.length; i++) {
                         String[] parts = offsets[i].split(":");
-                        textEntries[i] = new TextEntry(parseRIInt(parts[0]), parseRIInt(parts[1]));
+                        textEntries[i] = new TextEntry(Utils.parseRIInt(parts[0]), Utils.parseRIInt(parts[1]));
                     }
                     sp.textEntries = textEntries;
                     break;
@@ -396,14 +366,14 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                 case "Species":
                     int[] speciesCodeOffsets = new int[offsets.length];
                     for (int i = 0; i < speciesCodeOffsets.length; i++) {
-                        speciesCodeOffsets[i] = parseRIInt(offsets[i]);
+                        speciesCodeOffsets[i] = Utils.parseRIInt(offsets[i]);
                     }
                     rp.speciesCodeOffsets = speciesCodeOffsets;
                     break;
                 case "Level":
                     int[] levelCodeOffsets = new int[offsets.length];
                     for (int i = 0; i < levelCodeOffsets.length; i++) {
-                        levelCodeOffsets[i] = parseRIInt(offsets[i]);
+                        levelCodeOffsets[i] = Utils.parseRIInt(offsets[i]);
                     }
                     rp.levelCodeOffsets = levelCodeOffsets;
                     break;
@@ -411,7 +381,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                     ScriptEntry[] scriptEntries = new ScriptEntry[offsets.length];
                     for (int i = 0; i < scriptEntries.length; i++) {
                         String[] parts = offsets[i].split(":");
-                        scriptEntries[i] = new ScriptEntry(parseRIInt(parts[0]), parseRIInt(parts[1]));
+                        scriptEntries[i] = new ScriptEntry(Utils.parseRIInt(parts[0]), Utils.parseRIInt(parts[1]));
                     }
                     rp.speciesScriptOffsets = scriptEntries;
                     break;
@@ -419,7 +389,7 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
                     ScriptEntry[] genderEntries = new ScriptEntry[offsets.length];
                     for (int i = 0; i < genderEntries.length; i++) {
                         String[] parts = offsets[i].split(":");
-                        genderEntries[i] = new ScriptEntry(parseRIInt(parts[0]), parseRIInt(parts[1]));
+                        genderEntries[i] = new ScriptEntry(Utils.parseRIInt(parts[0]), Utils.parseRIInt(parts[1]));
                     }
                     rp.genderOffsets = genderEntries;
                     break;
@@ -434,12 +404,12 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         Matcher m = r.matcher(tmTextString);
         while (m.find()) {
             String[] segments = m.group().split("=");
-            int tmNum = parseRIInt(segments[0]);
+            int tmNum = Utils.parseRIInt(segments[0]);
             String[] entries = segments[1].substring(1, segments[1].length() - 1).split(",");
             List<TextEntry> textEntries = new ArrayList<>();
             for (String entry : entries) {
                 String[] textSegments = entry.split(":");
-                TextEntry textEntry = new TextEntry(parseRIInt(textSegments[0]), parseRIInt(textSegments[1]));
+                TextEntry textEntry = new TextEntry(Utils.parseRIInt(textSegments[0]), Utils.parseRIInt(textSegments[1]));
                 textEntries.add(textEntry);
             }
             tmTexts.put(tmNum, textEntries);
@@ -450,10 +420,10 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
         String[] tmTextGameCornerEntries = tmTextGameCornerString.substring(1, tmTextGameCornerString.length() - 1).split(",");
         for (String tmTextGameCornerEntry : tmTextGameCornerEntries) {
             String[] segments = tmTextGameCornerEntry.trim().split("=");
-            int tmNum = parseRIInt(segments[0]);
+            int tmNum = Utils.parseRIInt(segments[0]);
             String textEntry = segments[1].substring(1, segments[1].length() - 1);
             String[] textSegments = textEntry.split(":");
-            TextEntry entry = new TextEntry(parseRIInt(textSegments[0]), parseRIInt(textSegments[1]));
+            TextEntry entry = new TextEntry(Utils.parseRIInt(textSegments[0]), Utils.parseRIInt(textSegments[1]));
             tmTextGameCorner.put(tmNum, entry);
         }
     }

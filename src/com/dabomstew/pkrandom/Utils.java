@@ -97,7 +97,7 @@ public class Utils {
                 "green_translation.tbl", "gsc_english.tbl", "gsc_freger.tbl", "gsc_espita.tbl", "gba_english.tbl",
                 "gba_jpn.tbl", "Generation4.tbl", "Generation5.tbl", "gen1_offsets.ini", "gen2_offsets.ini",
                 "gen3_offsets.ini", "gen4_offsets.ini", "gen5_offsets.ini", "gen6_offsets.ini", "gen7_offsets.ini",
-                "swsh_offsets.ini", SysConstants.customNamesFile };
+                "swsh_offsets.ini", "bdsp_offsets.ini", SysConstants.customNamesFile };
         for (String filename : required) {
             if (!FileFunctions.configExists(filename)) {
                 throw new FileNotFoundException(filename);
@@ -137,6 +137,36 @@ public class Utils {
         String file = location.getFile();
         String plusEncoded = file.replaceAll("\\+", "%2b");
         return new File(java.net.URLDecoder.decode(plusEncoded, "UTF-8"));
+    }
+
+    public static int parseRIInt(String off) {
+        int radix = 10;
+        off = off.trim().toLowerCase();
+        if (off.startsWith("0x") || off.startsWith("&h")) {
+            radix = 16;
+            off = off.substring(2);
+        }
+        try {
+            return Integer.parseInt(off, radix);
+        } catch (NumberFormatException ex) {
+            System.err.println("invalid base " + radix + "number " + off);
+            return 0;
+        }
+    }
+
+    public static long parseRILong(String off) {
+        int radix = 10;
+        off = off.trim().toLowerCase();
+        if (off.startsWith("0x") || off.startsWith("&h")) {
+            radix = 16;
+            off = off.substring(2);
+        }
+        try {
+            return Long.parseLong(off, radix);
+        } catch (NumberFormatException ex) {
+            System.err.println("invalid base " + radix + "number " + off);
+            return 0;
+        }
     }
 
     public static class InvalidROMException extends Exception {
