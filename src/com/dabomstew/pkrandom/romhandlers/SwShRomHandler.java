@@ -513,7 +513,14 @@ public class SwShRomHandler extends AbstractSwitchRomHandler {
 
     @Override
     public Map<Integer, StatChange> getUpdatedPokemonStats(int generation) {
-        return null;
+        Map<Integer, StatChange> map = GlobalConstants.getStatChanges(generation);
+        switch (generation) {
+            case 9:
+                map.put(Species.SwShFormes.zacianC, new StatChange(Stat.ATK.val, 150));
+                map.put(Species.SwShFormes.zamazentaC, new StatChange(Stat.ATK.val | Stat.DEF.val | Stat.SPDEF.val, 120, 140, 140));
+                break;
+        }
+        return map;
     }
 
     @Override

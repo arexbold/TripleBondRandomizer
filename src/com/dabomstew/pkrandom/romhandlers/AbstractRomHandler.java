@@ -307,7 +307,7 @@ public abstract class AbstractRomHandler implements RomHandler {
             Map<Integer,StatChange> statChanges = getUpdatedPokemonStats(gen);
 
             for (int i = 1; i < pokes.size(); i++) {
-                StatChange changedStats = statChanges.get(i);
+                StatChange changedStats = statChanges.get(pokes.get(i).number);
                 if (changedStats != null) {
                     int statNum = 0;
                     if ((changedStats.stat & Stat.HP.val) != 0) {

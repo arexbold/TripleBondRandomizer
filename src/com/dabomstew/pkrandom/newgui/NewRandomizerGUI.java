@@ -2759,10 +2759,10 @@ public class NewRandomizerGUI {
 
             pbsStandardizeEXPCurvesCheckBox.setEnabled(true);
             pbsLegendariesSlowRadioButton.setSelected(true);
-            pbsUpdateBaseStatsCheckBox.setEnabled(pokemonGeneration < 8);
-            pbsUpdateBaseStatsCheckBox.setVisible(pokemonGeneration < 8);
+            pbsUpdateBaseStatsCheckBox.setEnabled(pokemonGeneration < GlobalConstants.HIGHEST_POKEMON_GEN);
+            pbsUpdateBaseStatsCheckBox.setVisible(pokemonGeneration < GlobalConstants.HIGHEST_POKEMON_GEN);
             pbsFollowMegaEvosCheckBox.setVisible(romHandler.hasMegaEvolutions());
-            pbsUpdateComboBox.setVisible(pokemonGeneration < 8);
+            pbsUpdateComboBox.setVisible(pokemonGeneration < GlobalConstants.HIGHEST_POKEMON_GEN);
             ExpCurve[] expCurves = getEXPCurvesForGeneration(pokemonGeneration);
             String[] expCurveNames = new String[expCurves.length];
             for (int i = 0; i < expCurves.length; i++) {
@@ -2879,9 +2879,9 @@ public class NewRandomizerGUI {
             mdRandomizeMoveTypesCheckBox.setEnabled(true);
             mdRandomizeMoveCategoryCheckBox.setEnabled(romHandler.hasPhysicalSpecialSplit());
             mdRandomizeMoveCategoryCheckBox.setVisible(romHandler.hasPhysicalSpecialSplit());
-            mdUpdateMovesCheckBox.setEnabled(pokemonGeneration < 8);
-            mdUpdateMovesCheckBox.setVisible(pokemonGeneration < 8);
-            mdUpdateComboBox.setVisible(pokemonGeneration < 8);
+            mdUpdateMovesCheckBox.setEnabled(pokemonGeneration < GlobalConstants.HIGHEST_POKEMON_GEN);
+            mdUpdateMovesCheckBox.setVisible(pokemonGeneration < GlobalConstants.HIGHEST_POKEMON_GEN);
+            mdUpdateComboBox.setVisible(pokemonGeneration < GlobalConstants.HIGHEST_POKEMON_GEN);
 
             // Pokemon Movesets
             pmsUnchangedRadioButton.setEnabled(true);
