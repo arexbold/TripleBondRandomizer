@@ -274,7 +274,7 @@ public class Randomizer {
             default:
                 break;
         }
-        if (settings.isRandomizeStartersHeldItems() && !(romHandler instanceof Gen1RomHandler)) {
+        if (!(romHandler instanceof Gen1RomHandler)) {//Forces Pokemon to have a held item regardless of settings.
             romHandler.randomizeStarterHeldItems(settings);
         }
 

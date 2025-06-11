@@ -3410,7 +3410,7 @@ public abstract class AbstractRomHandler implements RomHandler {
     public Map<Integer, boolean[]> getMoveUpdates() {
         return moveUpdates;
     }
-
+//---Editing
     @Override
     public void randomizeMovesLearnt(Settings settings) {
         boolean typeThemed = settings.getMovesetsMod() == Settings.MovesetsMod.RANDOM_PREFER_SAME_TYPE;
@@ -3429,7 +3429,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         List<Move> validDamagingMoves = new ArrayList<>();
         Map<Type, List<Move>> validTypeMoves = new HashMap<>();
         Map<Type, List<Move>> validTypeDamagingMoves = new HashMap<>();
-        createSetsOfMoves(noBroken, validMoves, validDamagingMoves, validTypeMoves, validTypeDamagingMoves);
+        createSetsOfMoves(noBroken, validMoves, validDamagingMoves, validTypeMoves, validTypeDamagingMoves); //--Chooses a list of moves that are valid to randomize with?
 
         for (Integer pkmnNum : movesets.keySet()) {
             List<Integer> learnt = new ArrayList<>();
@@ -3716,13 +3716,14 @@ public abstract class AbstractRomHandler implements RomHandler {
 
     private void createSetsOfMoves(boolean noBroken, List<Move> validMoves, List<Move> validDamagingMoves,
                                    Map<Type, List<Move>> validTypeMoves, Map<Type, List<Move>> validTypeDamagingMoves) {
-        List<Move> allMoves = this.getMoves();
+        List<Move> allMoves = this.getMoves(); //--Gets whole list of moves
         List<Integer> hms = this.getHMMoves();
         Set<Integer> allBanned = new HashSet<Integer>(noBroken ? this.getGameBreakingMoves() : Collections.EMPTY_SET);
         allBanned.addAll(hms);
         allBanned.addAll(this.getMovesBannedFromLevelup());
         allBanned.addAll(GlobalConstants.zMoves);
         allBanned.addAll(this.getIllegalMoves());
+        allBanned.addAll(getBannedMovesForBoldmon());//--Adding extra banned moves
 
         for (Move mv : allMoves) {
             if (mv != null && !GlobalConstants.bannedRandomMoves[mv.number] && !allBanned.contains(mv.number)) {
@@ -5211,14 +5212,9 @@ public abstract class AbstractRomHandler implements RomHandler {
 
     @Override
     public void randomizeStarterHeldItems(Settings settings) {
-        boolean banBadItems = settings.isBanBadRandomStarterHeldItems();
-
-        List<Integer> oldHeldItems = this.getStarterHeldItems();
+        //Surprise! It's not random. Added Smoke Ball for Gen 3. Gen 4 HGSS does not work unfortunately.
         List<Integer> newHeldItems = new ArrayList<>();
-        ItemList possibleItems = banBadItems ? this.getNonBadItems() : this.getAllowedItems();
-        for (int i = 0; i < oldHeldItems.size(); i++) {
-            newHeldItems.add(possibleItems.randomItem(this.random));
-        }
+        newHeldItems.add(Gen3Items.smokeBall);
         this.setStarterHeldItems(newHeldItems);
     }
 
@@ -7476,6 +7472,29 @@ public abstract class AbstractRomHandler implements RomHandler {
     public List<Integer> getGameBreakingMoves() {
         // Sonicboom & Dragon Rage
         return Arrays.asList(49, 82);
+    }
+
+    public static List<Integer> getBannedMovesForBoldmon() {
+        //Moves that are considered useless/bloat for specific challenges are removed
+        return Arrays.asList(
+        Moves.splash,
+        Moves.imprison, 
+        Moves.teleport, 
+        Moves.spiderWeb, 
+        Moves.spikes, 
+        Moves.falseSwipe, 
+        Moves.meanLook, 
+        Moves.sweetScent, 
+        Moves.spitUp, 
+        Moves.swallow, 
+        Moves.recycle, 
+        Moves.block, 
+        Moves.naturalGift, 
+        Moves.feint, 
+        Moves.fling, 
+        Moves.toxicSpikes, 
+        Moves.stealthRock, 
+        Moves.lunarDance);
     }
 
     @Override
