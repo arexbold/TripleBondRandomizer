@@ -129,21 +129,68 @@ public class Pokemon implements Comparable<Pokemon> {
             spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + 10;
             speed = (int) Math.max(1, Math.round(speW / totW * bst)) + 10;
         } else {
-            // Minimum 20 HP, 10 everything else
-            int bst = bst() - 70;
+            int real_bst = bst();
+            
+            int hp_base = 0;
+            int stat_base = 0;
 
-            // Make weightings
-            double hpW = random.nextDouble(), atkW = random.nextDouble(), defW = random.nextDouble();
-            double spaW = random.nextDouble(), spdW = random.nextDouble(), speW = random.nextDouble();
+            if (real_bst < 300) {
+                hp_base = 30;
+                stat_base = 15;
+            } else if (real_bst < 450) {
+                hp_base = 40;
+                stat_base = 30;
+            } else {
+                hp_base = 50;
+                stat_base = 40;
+            }
+
+            // Set the base total minimum then subtract from bst so that it keeps the same total bst
+            int base_total = hp_base + stat_base * 5;
+            int bst = real_bst - base_total;
+
+            // Randomize how many dominant stats to have 1 or 2
+            int dominantCount;
+            if (random.nextBoolean()){
+                dominantCount = 1;
+            }
+            else{
+                dominantCount = 2;
+            }
+            
+            // Randomize which stat(s) are going to be dominant
+            boolean[] isDominant = new boolean[6];
+            List<Integer> index = Arrays.asList(0, 1, 2, 3, 4, 5);
+            Collections.shuffle(index, random);
+            for (int i = 0; i < dominantCount; i++) {
+                isDominant[index.get(i)] = true;
+            }
+            
+            //Weightings
+            double hpW = random.nextDouble();
+            double atkW = random.nextDouble();
+            double defW = random.nextDouble();
+            double spaW = random.nextDouble();
+            double spdW = random.nextDouble();
+            double speW = random.nextDouble();
+
+            //Find the dominant bools and then multi them.
+            double dominantMulti = 2.5 + (random.nextDouble() * 1.5); // 2.5 to 4.0
+            if (isDominant[0]) hpW *= dominantMulti;
+            if (isDominant[1]) atkW *= dominantMulti;
+            if (isDominant[2]) defW *= dominantMulti;
+            if (isDominant[3]) spaW *= dominantMulti;
+            if (isDominant[4]) spdW *= dominantMulti;
+            if (isDominant[5]) speW *= dominantMulti;
 
             double totW = hpW + atkW + defW + spaW + spdW + speW;
 
-            hp = (int) Math.max(1, Math.round(hpW / totW * bst)) + 20;
-            attack = (int) Math.max(1, Math.round(atkW / totW * bst)) + 10;
-            defense = (int) Math.max(1, Math.round(defW / totW * bst)) + 10;
-            spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + 10;
-            spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + 10;
-            speed = (int) Math.max(1, Math.round(speW / totW * bst)) + 10;
+            hp = (int) Math.max(1, Math.round(hpW / totW * bst)) + hp_base;
+            attack = (int) Math.max(1, Math.round(atkW / totW * bst)) + stat_base;
+            defense = (int) Math.max(1, Math.round(defW / totW * bst)) + stat_base;
+            spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + stat_base;
+            spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + stat_base;
+            speed = (int) Math.max(1, Math.round(speW / totW * bst)) + stat_base;
         }
 
         // Check for something we can't store
