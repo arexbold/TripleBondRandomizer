@@ -15,7 +15,7 @@ Download the randomizer in order to set it in the New Run Settings in the tracke
 
 ### Compatibility
 
-Currently only works with Gen 4 and specifically HeartGold. Will break on anything else.
+Will only work with a Triple Bond patch on Pokemon HeartGold.
 
 
 # Other problems
