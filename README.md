@@ -7,9 +7,15 @@ This fork was made to tweak the Randomizer in order to make it more suitable for
 If you're looking for the ACTUAL randomizer go here: [release page](https://github.com/Ajarmar/universal-pokemon-randomizer-zx/releases) for changelogs and downloads.
 
 
+### Installation
+Download the randomizer in order to set it in the New Run Settings in the tracker.
+## <img width="375" height="803" alt="image" src="https://github.com/user-attachments/assets/5f6f07d9-c482-4e06-9351-b71d933cce01" />
+
+
+
 ### Compatibility
 
-Currently known to only work with FireRed and HeartGold. Use caution with other games.
+Currently only works with Gen 4 and specifically HeartGold. Will break on anything else.
 
 
 # Other problems
