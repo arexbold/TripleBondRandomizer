@@ -30,7 +30,9 @@ import com.dabomstew.pkrandom.constants.Species;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class Pokemon implements Comparable<Pokemon> {
@@ -112,9 +114,15 @@ public class Pokemon implements Comparable<Pokemon> {
     }
 
     public void randomizeStatsWithinBST(Random random) {
+        int retryCount = 0;
+        final int MAX_RETRIES = 50;
+
+        // Keep track of original BST so that retries don't change it
+        final int originalBST = bst();
+
         if (number == Species.shedinja) {
             // Shedinja is horribly broken unless we restrict him to 1HP.
-            int bst = bst() - 51;
+            int bst = originalBST - 51;
 
             // Make weightings
             double atkW = random.nextDouble(), defW = random.nextDouble();
@@ -128,78 +136,215 @@ public class Pokemon implements Comparable<Pokemon> {
             spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + 10;
             spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + 10;
             speed = (int) Math.max(1, Math.round(speW / totW * bst)) + 10;
+            return;
+        }
+
+        // Bases determined once from the original BST
+        int hp_base = 0;
+        int stat_base = 0;
+
+        if (originalBST < 300) {
+            hp_base = 20;
+            stat_base = 15;
+        } else if (originalBST < 400) {
+            hp_base = 25;
+            stat_base = 20;
+        } else if (originalBST < 500) {
+            hp_base = 30;
+            stat_base = 25;
+        } else if (originalBST < 600) {
+            hp_base = 35;
+            stat_base = 30;
         } else {
-            int real_bst = bst();
+            hp_base = 40;
+            stat_base = 35;
+        }
+
+        // Set the base total minimum then subtract from bst so that it keeps the same total bst
+        final int base_total = hp_base + stat_base * 5;
+        final int bstPool = originalBST - base_total;
+
+        do {
+            //Weightings with some extra randominess
+            double hpW = 0.9 + 0.2 * random.nextDouble();
+            double atkW = 0.9 + 0.2 * random.nextDouble();
+            double defW = 0.9 + 0.2 * random.nextDouble();
+            double spaW = 0.9 + 0.2 * random.nextDouble();
+            double spdW = 0.9 + 0.2 * random.nextDouble();
+            double speW = 0.9 + 0.2 * random.nextDouble();
             
-            int hp_base = 0;
-            int stat_base = 0;
-
-            if (real_bst < 300) {
-                hp_base = 30;
-                stat_base = 15;
-            } else if (real_bst < 450) {
-                hp_base = 40;
-                stat_base = 30;
-            } else {
-                hp_base = 50;
-                stat_base = 40;
-            }
-
-            // Set the base total minimum then subtract from bst so that it keeps the same total bst
-            int base_total = hp_base + stat_base * 5;
-            int bst = real_bst - base_total;
-
-            // Randomize how many dominant stats to have 1 or 2
-            int dominantCount;
-            if (random.nextBoolean()){
-                dominantCount = 1;
-            }
-            else{
-                dominantCount = 2;
-            }
-            
-            // Randomize which stat(s) are going to be dominant
+            // Class system for dominant stats
+            int classPick;
             boolean[] isDominant = new boolean[6];
-            List<Integer> index = Arrays.asList(0, 1, 2, 3, 4, 5);
-            Collections.shuffle(index, random);
-            for (int i = 0; i < dominantCount; i++) {
-                isDominant[index.get(i)] = true;
+            boolean[] isPrimary = new boolean[6]; // For primary dominant stats that need more weight
+            boolean fastGlassCannon = false;
+            if (random.nextDouble() < 0.08) { // 8% chance for Even Stevens
+                classPick = 7;
             }
-            
-            //Weightings
-            double hpW = random.nextDouble();
-            double atkW = random.nextDouble();
-            double defW = random.nextDouble();
-            double spaW = random.nextDouble();
-            double spdW = random.nextDouble();
-            double speW = random.nextDouble();
+            else {
+                classPick = random.nextInt(7); // Other classes
+            }
 
-            //Find the dominant bools and then multi them.
-            double dominantMulti = 2.5 + (random.nextDouble() * 1.5); // 2.5 to 4.0
-            if (isDominant[0]) hpW *= dominantMulti;
-            if (isDominant[1]) atkW *= dominantMulti;
-            if (isDominant[2]) defW *= dominantMulti;
-            if (isDominant[3]) spaW *= dominantMulti;
-            if (isDominant[4]) spdW *= dominantMulti;
-            if (isDominant[5]) speW *= dominantMulti;
+            switch (classPick) {
+                case 0: // Pure Tank
+                    isDominant[2] = true; isPrimary[2] = true; // DEF
+                    isDominant[4] = true; isPrimary[4] = true; // SPD
+                    break;
+                case 1: // ATK Tank
+                    isDominant[1] = true; // ATK
+                    isDominant[2] = true; isPrimary[2] = true; // DEF
+                    isDominant[4] = true; isPrimary[4] = true; // SPD
+                    break;
+                case 2: // SPA Tank
+                    isDominant[3] = true; // SPA
+                    isDominant[2] = true; isPrimary[2] = true;// DEF
+                    isDominant[4] = true; isPrimary[4] = true; // SPD
+                    break;
+                case 3: // Mixed Attacker
+                    isDominant[1] = true; isPrimary[1] = true; // ATK
+                    isDominant[3] = true; isPrimary[3] = true; // SPA
+                    int randomMix = random.nextInt(3); // Either lean towards 1 side or don't
+                    if (randomMix == 0) { // Lean towards ATK
+                        atkW *= 1.3;
+                    }
+                    else if (randomMix == 1) { // Lean towards SPA
+                        spaW *= 1.3;
+                    }
+                    break;
+                case 4: // Pure ATK
+                    isDominant[1] = true; isPrimary[1] = true; // ATK
+                    if (random.nextDouble() < 0.15) { // 15% chance to be dominant in SPE too
+                        isDominant[5] = true; // SPE
+                        fastGlassCannon = true;
+                    }
+                    break;
+                case 5: // Pure SPA
+                    isDominant[3] = true; isPrimary[3] = true; // SPA
+                    if (random.nextDouble() < 0.15) { // 15% chance to be dominant in SPE too
+                        isDominant[5] = true; // SPE
+                        fastGlassCannon = true;
+                    }
+                    break;
+                case 6: // Speed Demon
+                    isDominant[5] = true; isPrimary[5] = true; // SPE
+                    int randomMix2 = random.nextInt(3); // Either lean towards 1 side or don't 
+                    if (randomMix2 == 0) { // Sub dominant ATK
+                        isDominant[1] = true;
+                    }
+                    else if (randomMix2 == 1) { // Sub dominant SPA
+                        isDominant[3] = true;
+                    }
+                    break;
+                case 7: // Even Steven
+                    if (random.nextBoolean()) {
+                        isDominant[1] = true; // ATK
+                    }
+                    if (random.nextBoolean()) {
+                        isDominant[2] = true; // DEF
+                    }
+                    if (random.nextBoolean()) {
+                        isDominant[3] = true; // SPA
+                    }
+                    if (random.nextBoolean()) {
+                        isDominant[4] = true; // SPD
+                    }
+                    if (random.nextBoolean()) {
+                        isDominant[5] = true; // SPE
+                    }
+                    break;
+            }
+
+            // Randomly make HP or SPE dominant
+            if (random.nextDouble() < 0.30) { // 30% chance to be dominant in HP
+                isDominant[0] = true; // HP
+                if (random.nextDouble() < 0.50) { // 50% chance to make it primary too
+                    isPrimary[0] = true;
+                }
+            }
+
+            if (random.nextDouble() < 0.25) { // 25% chance to be dominant in SPE
+                isDominant[5] = true; // SPE
+                if (random.nextDouble() < 0.50) { // 50% chance to make it primary too
+                    isPrimary[5] = true;
+                }
+            }
+            else if (fastGlassCannon) { // Special case if a glass cannon already rolled a dominant SPE but failed the 25% chance above
+                if (random.nextDouble() < 0.50) { // 50% chance to make it primary too
+                    isPrimary[5] = true;
+                }
+            }
+
+            // Base multiplier for 1 dominant stat
+            double dominantMulti = 1.8 + (random.nextDouble() * 0.9); // 1.8–2.7
+            
+            //Find the dominant bools and then multi them. If they're not dominate, -40% ~ +20% variance.
+            if (isDominant[0]) hpW *= dominantMulti; else hpW *= 0.60 + 0.60 * random.nextDouble();
+            if (isDominant[1]) atkW *= dominantMulti; else atkW *= 0.60 + 0.60 * random.nextDouble();
+            if (isDominant[2]) defW *= dominantMulti; else defW *= 0.60 + 0.60 * random.nextDouble();
+            if (isDominant[3]) spaW *= dominantMulti; else spaW *= 0.60 + 0.60 * random.nextDouble();
+            if (isDominant[4]) spdW *= dominantMulti; else spdW *= 0.60 + 0.60 * random.nextDouble();
+            if (isDominant[5]) speW *= dominantMulti; else speW *= 0.60 + 0.60 * random.nextDouble();
+
+            // Extra boost for primary dominant stats
+            double primaryMulti  = 1.05 + (random.nextDouble() * 0.15); // 1.05–1.20
+            if (isPrimary[0]) hpW *= primaryMulti;
+            if (isPrimary[1]) atkW *= primaryMulti;
+            if (isPrimary[2]) defW *= primaryMulti;
+            if (isPrimary[3]) spaW *= primaryMulti;
+            if (isPrimary[4]) spdW *= primaryMulti;
+            if (isPrimary[5]) speW *= primaryMulti;
+
+            // If both DEF and SPD are dominant, randomly skew them so tanks aren't always even
+            if (isDominant[2] && isDominant[4]) {
+                double r = random.nextDouble();
+                if (r < 0.60) { // 60% chance mild skew
+                    if (random.nextBoolean()) { defW *= 1.15; spdW *= 0.85; }
+                    else { defW *= 0.85; spdW *= 1.15; }
+                } else if (r < 0.80) { // 20% chance strong skew
+                    if (random.nextBoolean()) { defW *= 1.30; spdW *= 0.70; }
+                    else { defW *= 0.70; spdW *= 1.30; }
+                }
+                // Then 20% to leave them even
+            }
+            // If both ATK and SPA are dominant, randomly skew them so mixed attackers aren't always even
+            if (isDominant[1] && isDominant[3]) {
+                double r = random.nextDouble();
+                if (r < 0.60) { // 60% chance mild skew
+                    if (random.nextBoolean()) { atkW *= 1.15; spaW *= 0.85; }
+                    else { atkW *= 0.85; spaW *= 1.15; }
+                } else if (r < 0.80) { // 20% chance strong skew
+                    if (random.nextBoolean()) { atkW *= 1.30; spaW *= 0.70; }
+                    else { atkW *= 0.70; spaW *= 1.30; }
+                }
+                // Then 20% to leave them even
+            }
 
             double totW = hpW + atkW + defW + spaW + spdW + speW;
 
-            hp = (int) Math.max(1, Math.round(hpW / totW * bst)) + hp_base;
-            attack = (int) Math.max(1, Math.round(atkW / totW * bst)) + stat_base;
-            defense = (int) Math.max(1, Math.round(defW / totW * bst)) + stat_base;
-            spatk = (int) Math.max(1, Math.round(spaW / totW * bst)) + stat_base;
-            spdef = (int) Math.max(1, Math.round(spdW / totW * bst)) + stat_base;
-            speed = (int) Math.max(1, Math.round(speW / totW * bst)) + stat_base;
-        }
+            hp = (int) Math.max(1, Math.round(hpW / totW * bstPool)) + hp_base;
+            attack = (int) Math.max(1, Math.round(atkW / totW * bstPool)) + stat_base;
+            defense = (int) Math.max(1, Math.round(defW / totW * bstPool)) + stat_base;
+            spatk = (int) Math.max(1, Math.round(spaW / totW * bstPool)) + stat_base;
+            spdef = (int) Math.max(1, Math.round(spdW / totW * bstPool)) + stat_base;
+            speed = (int) Math.max(1, Math.round(speW / totW * bstPool)) + stat_base;
 
-        // Check for something we can't store
-        if (hp > 255 || attack > 255 || defense > 255 || spatk > 255 || spdef > 255 || speed > 255) {
-            // re roll
-            randomizeStatsWithinBST(random);
-        }
+            retryCount++;
+
+            // Fallback to capping at 255 if need be
+            if (retryCount > MAX_RETRIES) {
+                hp = Math.min(255, hp);
+                attack = Math.min(255, attack);
+                defense = Math.min(255, defense);
+                spatk = Math.min(255, spatk);
+                spdef = Math.min(255, spdef);
+                speed = Math.min(255, speed);
+                break;
+            }
+
+        } while (hp > 255 || attack > 255 || defense > 255 || spatk > 255 || spdef > 255 || speed > 255);
 
     }
+
 
     public void copyRandomizedStatsUpEvolution(Pokemon evolvesFrom) {
         double ourBST = bst();

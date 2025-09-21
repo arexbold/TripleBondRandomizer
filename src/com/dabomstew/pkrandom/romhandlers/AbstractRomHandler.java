@@ -541,6 +541,8 @@ public abstract class AbstractRomHandler implements RomHandler {
             }
         }
 
+        bannedAbilities.add(Abilities.pickup); //--Added since ability is banned in specific challenge and having it causes issues
+
         if (weighDuplicatesTogether) {
             bannedAbilities.addAll(GlobalConstants.duplicateAbilities);
             if (generationOfPokemon() == 3) {
@@ -3717,9 +3719,9 @@ public abstract class AbstractRomHandler implements RomHandler {
     private void createSetsOfMoves(boolean noBroken, List<Move> validMoves, List<Move> validDamagingMoves,
                                    Map<Type, List<Move>> validTypeMoves, Map<Type, List<Move>> validTypeDamagingMoves) {
         List<Move> allMoves = this.getMoves(); //--Gets whole list of moves
-        List<Integer> hms = this.getHMMoves();
+        //List<Integer> hms = this.getHMMoves();
         Set<Integer> allBanned = new HashSet<Integer>(noBroken ? this.getGameBreakingMoves() : Collections.EMPTY_SET);
-        allBanned.addAll(hms);
+        //allBanned.addAll(hms);
         allBanned.addAll(this.getMovesBannedFromLevelup());
         allBanned.addAll(GlobalConstants.zMoves);
         allBanned.addAll(this.getIllegalMoves());
@@ -4465,6 +4467,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         List<Integer> banned = new ArrayList<Integer>(noBroken ? this.getGameBreakingMoves() : Collections.EMPTY_LIST);
         banned.addAll(getMovesBannedFromLevelup());
         banned.addAll(this.getIllegalMoves());
+        banned.addAll(getBannedMovesForBoldmon());//--Adding extra banned moves
         // field moves?
         List<Integer> fieldMoves = this.getFieldMoves();
         int preservedFieldMoveCount = 0;
@@ -7481,7 +7484,6 @@ public abstract class AbstractRomHandler implements RomHandler {
         Moves.imprison, 
         Moves.teleport, 
         Moves.spiderWeb, 
-        Moves.spikes, 
         Moves.falseSwipe, 
         Moves.meanLook, 
         Moves.sweetScent, 
@@ -7492,9 +7494,10 @@ public abstract class AbstractRomHandler implements RomHandler {
         Moves.naturalGift, 
         Moves.feint, 
         Moves.fling, 
-        Moves.toxicSpikes, 
-        Moves.stealthRock, 
-        Moves.lunarDance);
+        Moves.furyAttack, 
+        Moves.doubleSlap, 
+        Moves.lunarDance,
+        Moves.snatch);
     }
 
     @Override
