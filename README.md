@@ -8,7 +8,7 @@ If you're looking for the ACTUAL randomizer go here: [release page](https://gith
 
 
 ### Installation
-Download the randomizer in order to set it in the New Run Settings in the tracker.
+Download the randomizer and randomizer settings in order to set it in the New Run Settings in the tracker.
 ## <img width="375" height="803" alt="image" src="https://github.com/user-attachments/assets/5f6f07d9-c482-4e06-9351-b71d933cce01" />
 
 
