@@ -915,7 +915,7 @@ public class Gen4Constants {
         nonBadItems = allowedItems.copy();
 
         nonBadItems.banSingles(Items.oddKeystone, Items.griseousOrb, Items.soulDew, Items.lightBall,
-                Items.oranBerry, Items.quickPowder, Items.smokeBall, Items.expShare, Items.revive, Items.maxRevive, Items.revivalHerb, Items.sacredAsh);
+                Items.oranBerry, Items.quickPowder, Items.smokeBall, Items.expShare, Items.revive, Items.maxRevive, Items.revivalHerb, Items.sacredAsh, Items.heartScale, Items.rareCandy);
         nonBadItems.banRange(Items.shoalSalt,2);
         nonBadItems.banRange(Items.growthMulch, 4); // mulch
         nonBadItems.banRange(Items.adamantOrb, 2); // orbs
@@ -1895,7 +1895,8 @@ public class Gen4Constants {
         tag(trs, 0x101, "GYM13-LEADER");
         tag(trs, 0x102, "GYM14-LEADER");
         tag(trs, 0x103, "GYM15-LEADER");
-        tag(trs, 0x105, "GYM16-LEADER");
+        //To make Blue not be tagged as a Gym Leader for specific purpose in the Triple Bond Challenge
+        //tag(trs, 0x105, "GYM16-LEADER");
 
         // Elite 4
         tag(trs, 0xf5, "ELITE1");

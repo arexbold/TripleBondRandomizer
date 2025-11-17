@@ -494,12 +494,20 @@ public class Pokemon implements Comparable<Pokemon> {
             Species.xurkitree, Species.celesteela, Species.kartana, Species.guzzlord, Species.poipole, Species.naganadel,
             Species.stakataka, Species.blacephalon);
 
+    //Triple Bond Challenge specifics
+    private static final List<Integer> pseudoLegendaries = Arrays.asList(Species.dragonite, Species.tyranitar, Species.metagross, Species.garchomp, Species.slaking);
+
     public boolean isLegendary() {
         return formeNumber == 0 ? legendaries.contains(this.number) : legendaries.contains(this.baseForme.number);
     }
 
     public boolean isStrongLegendary() {
         return formeNumber == 0 ? strongLegendaries.contains(this.number) : strongLegendaries.contains(this.baseForme.number);
+    }
+
+     //Triple Bond Challenge specifics
+    public boolean isPseudoLegendary() {
+        return formeNumber == 0 ? pseudoLegendaries.contains(this.number) : pseudoLegendaries.contains(this.baseForme.number);
     }
 
     // This method can only be used in contexts where alt formes are NOT involved; otherwise, some alt formes

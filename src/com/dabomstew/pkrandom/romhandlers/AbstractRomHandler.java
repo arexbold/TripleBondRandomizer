@@ -44,7 +44,7 @@ public abstract class AbstractRomHandler implements RomHandler {
     protected List<Pokemon> mainPokemonListInclFormes;
     private List<Pokemon> altFormesList;
     private List<MegaEvolution> megaEvolutionsList;
-    private List<Pokemon> noLegendaryList, onlyLegendaryList, ultraBeastList;
+    private List<Pokemon> noLegendaryList, onlyLegendaryList, ultraBeastList, noPseudoLegendaryList;
     private List<Pokemon> noLegendaryListInclFormes, onlyLegendaryListInclFormes;
     private List<Pokemon> noLegendaryAltsList, onlyLegendaryAltsList;
     private List<Pokemon> pickedStarters;
@@ -151,12 +151,16 @@ public abstract class AbstractRomHandler implements RomHandler {
         noLegendaryAltsList = new ArrayList<>();
         onlyLegendaryAltsList = new ArrayList<>();
         ultraBeastList = new ArrayList<>();
+        noPseudoLegendaryList = new ArrayList<>();
 
+        // Set psuedo-legendary flags
         for (Pokemon p : mainPokemonList) {
             if (p.isLegendary()) {
                 onlyLegendaryList.add(p);
             } else if (p.isUltraBeast()) {
                 ultraBeastList.add(p);
+            } else if (p.isPseudoLegendary()) {
+                noPseudoLegendaryList.add(p);
             } else {
                 noLegendaryList.add(p);
             }
@@ -554,12 +558,15 @@ public abstract class AbstractRomHandler implements RomHandler {
 
         if (evolutionSanity) {
             // copy abilities straight up evolution lines
-            // still keep WG as an exception, though
+            // still keep WG and Forecast as exceptions, though
 
             copyUpEvolutionsHelper(pk -> {
                 if (pk.ability1 != Abilities.wonderGuard
                         && pk.ability2 != Abilities.wonderGuard
-                        && pk.ability3 != Abilities.wonderGuard) {
+                        && pk.ability3 != Abilities.wonderGuard
+                        && pk.ability1 != Abilities.forecast
+                        && pk.ability2 != Abilities.forecast
+                        && pk.ability3 != Abilities.forecast) {
                     // Pick first ability
                     pk.ability1 = pickRandomAbility(maxAbility, bannedAbilities, weighDuplicatesTogether);
 
@@ -582,7 +589,10 @@ public abstract class AbstractRomHandler implements RomHandler {
             }, (evFrom, evTo, toMonIsFinalEvo) -> {
                 if (evTo.ability1 != Abilities.wonderGuard
                         && evTo.ability2 != Abilities.wonderGuard
-                        && evTo.ability3 != Abilities.wonderGuard) {
+                        && evTo.ability3 != Abilities.wonderGuard
+                        && evTo.ability1 != Abilities.forecast
+                        && evTo.ability2 != Abilities.forecast
+                        && evTo.ability3 != Abilities.forecast) {
                     evTo.ability1 = evFrom.ability1;
                     evTo.ability2 = evFrom.ability2;
                     evTo.ability3 = evFrom.ability3;
@@ -595,10 +605,13 @@ public abstract class AbstractRomHandler implements RomHandler {
                     continue;
                 }
 
-                // Don't remove WG if already in place.
+                // Don't remove WG or Forecast if already in place.
                 if (pk.ability1 != Abilities.wonderGuard
                         && pk.ability2 != Abilities.wonderGuard
-                        && pk.ability3 != Abilities.wonderGuard) {
+                        && pk.ability3 != Abilities.wonderGuard
+                        && pk.ability1 != Abilities.forecast
+                        && pk.ability2 != Abilities.forecast
+                        && pk.ability3 != Abilities.forecast) {
                     // Pick first ability
                     pk.ability1 = this.pickRandomAbility(maxAbility, bannedAbilities, weighDuplicatesTogether);
 
@@ -7016,6 +7029,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         return zonesToEncounters;
     }
 
+    //Edit here for random pokes
     public Pokemon pickEntirelyRandomPokemon(boolean includeFormes, boolean noLegendaries, EncounterSet area, List<Pokemon> banned) {
         Pokemon result;
         Pokemon randomNonLegendaryPokemon = includeFormes ? randomNonLegendaryPokemonInclFormes() : randomNonLegendaryPokemon();

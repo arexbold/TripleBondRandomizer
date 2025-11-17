@@ -4286,63 +4286,6 @@ public class Gen4RomHandler extends AbstractDSRomHandler {
             if (pkmn != null) {
                 extraEvolutions.clear();
                 for (Evolution evo : pkmn.evolutionsFrom) {
-                    // new 160 other impossible evolutions:
-                    if (romEntry.romType == Gen4Constants.Type_HGSS) {
-                        // beauty milotic
-                        if (evo.type == EvolutionType.LEVEL_HIGH_BEAUTY) {
-                            // Replace w/ level 35
-                            evo.type = EvolutionType.LEVEL;
-                            evo.extraInfo = 35;
-                            addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
-                        }
-                        // mt.coronet (magnezone/probopass)
-                        if (evo.type == EvolutionType.LEVEL_ELECTRIFIED_AREA) {
-                            // Replace w/ level 40
-                            evo.type = EvolutionType.LEVEL;
-                            evo.extraInfo = 40;
-                            addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
-                        }
-                        // moss rock (leafeon)
-                        if (evo.type == EvolutionType.LEVEL_MOSS_ROCK) {
-                            // Replace w/ leaf stone
-                            evo.type = EvolutionType.STONE;
-                            evo.extraInfo = Items.leafStone;
-                            addEvoUpdateStone(impossibleEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
-                        }
-                        // icy rock (glaceon)
-                        if (evo.type == EvolutionType.LEVEL_ICY_ROCK) {
-                            // Replace w/ dawn stone
-                            evo.type = EvolutionType.STONE;
-                            evo.extraInfo = Items.dawnStone;
-                            addEvoUpdateStone(impossibleEvolutionUpdates, evo, itemNames.get(evo.extraInfo));
-                        }
-                    }
-                    if (changeMoveEvos && evo.type == EvolutionType.LEVEL_WITH_MOVE) {
-                        // read move
-                        int move = evo.extraInfo;
-                        int levelLearntAt = 1;
-                        for (MoveLearnt ml : movesets.get(evo.from.number)) {
-                            if (ml.move == move) {
-                                levelLearntAt = ml.level;
-                                break;
-                            }
-                        }
-                        if (levelLearntAt == 1) {
-                            // override for piloswine
-                            levelLearntAt = 45;
-                        }
-                        // change to pure level evo
-                        evo.type = EvolutionType.LEVEL;
-                        evo.extraInfo = levelLearntAt;
-                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
-                    }
-                    // Pure Trade
-                    if (evo.type == EvolutionType.TRADE) {
-                        // Replace w/ level 37
-                        evo.type = EvolutionType.LEVEL;
-                        evo.extraInfo = 37;
-                        addEvoUpdateLevel(impossibleEvolutionUpdates, evo);
-                    }
                     // Trade w/ Item
                     if (evo.type == EvolutionType.TRADE_ITEM) {
                         // Get the current item & evolution
