@@ -495,7 +495,7 @@ public class Pokemon implements Comparable<Pokemon> {
             Species.stakataka, Species.blacephalon);
 
     //Triple Bond Challenge specifics
-    private static final List<Integer> pseudoLegendaries = Arrays.asList(Species.dragonite, Species.tyranitar, Species.metagross, Species.garchomp, Species.slaking);
+    private static final List<Integer> pseudoLegendaries = Arrays.asList(Species.dragonite, Species.tyranitar, Species.metagross, Species.garchomp, Species.slaking, Species.salamence);
 
     public boolean isLegendary() {
         return formeNumber == 0 ? legendaries.contains(this.number) : legendaries.contains(this.baseForme.number);
