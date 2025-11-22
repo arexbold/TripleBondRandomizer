@@ -658,4 +658,7 @@ public interface RomHandler {
     List<Pokemon> getBannedFormesForPlayerPokemon();
 
     List<Pokemon> getBannedFormesForTrainerPokemon();
+
+    //Triplebond specific
+    List<Pokemon> getBannedLegendariesForStaticPokemon();
 }

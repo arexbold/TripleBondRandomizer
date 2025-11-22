@@ -4090,6 +4090,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         List<StaticEncounter> replacements = new ArrayList<>();
         List<Pokemon> banned = this.bannedForStaticPokemon();
         banned.addAll(this.getBannedFormesForPlayerPokemon());
+        banned.addAll(this.getBannedLegendariesForStaticPokemon()); // Add extra bans for TB
         if (!abilitiesAreRandomized) {
             List<Pokemon> abilityDependentFormes = getAbilityDependentFormes();
             banned.addAll(abilityDependentFormes);
@@ -7119,6 +7120,21 @@ public abstract class AbstractRomHandler implements RomHandler {
             }
         }
         return bannedFormes;
+    }
+
+    @Override
+    public List<Pokemon> getBannedLegendariesForStaticPokemon() {
+        List<Pokemon> bannedLegendaries = new ArrayList<>();
+        for (int i = 0; i < mainPokemonListInclFormes.size(); i++) {
+            Pokemon pokemon = mainPokemonListInclFormes.get(i);
+            if (pokemon.isLegendary()) {
+                bannedLegendaries.add(pokemon);
+            }
+            if (pokemon.isPseudoLegendary()) {
+                bannedLegendaries.add(pokemon);
+            }
+        }
+        return bannedLegendaries;
     }
 
     @Override
