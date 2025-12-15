@@ -3738,7 +3738,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         allBanned.addAll(this.getMovesBannedFromLevelup());
         allBanned.addAll(GlobalConstants.zMoves);
         allBanned.addAll(this.getIllegalMoves());
-        allBanned.addAll(getBannedMovesForBoldmon());//--Adding extra banned moves
+        allBanned.addAll(getBannedMovesForTriplebond());//--Adding extra banned moves
 
         for (Move mv : allMoves) {
             if (mv != null && !GlobalConstants.bannedRandomMoves[mv.number] && !allBanned.contains(mv.number)) {
@@ -4484,7 +4484,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         List<Integer> banned = new ArrayList<Integer>(noBroken ? this.getGameBreakingMoves() : Collections.EMPTY_LIST);
         banned.addAll(getMovesBannedFromLevelup());
         banned.addAll(this.getIllegalMoves());
-        banned.addAll(getBannedMovesForBoldmon());//--Adding extra banned moves
+        banned.addAll(getBannedMovesForTriplebond());//--Adding extra banned moves
         // field moves?
         List<Integer> fieldMoves = this.getFieldMoves();
         int preservedFieldMoveCount = 0;
@@ -7510,7 +7510,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         return Arrays.asList(49, 82);
     }
 
-    public static List<Integer> getBannedMovesForBoldmon() {
+    public static List<Integer> getBannedMovesForTriplebond() {
         //Moves that are considered useless/bloat for specific challenges are removed
         return Arrays.asList(
         Moves.splash,
@@ -7518,7 +7518,6 @@ public abstract class AbstractRomHandler implements RomHandler {
         Moves.teleport, 
         Moves.spiderWeb, 
         Moves.falseSwipe, 
-        Moves.meanLook, 
         Moves.sweetScent, 
         Moves.spitUp, 
         Moves.swallow, 
@@ -7530,6 +7529,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         Moves.furyAttack, 
         Moves.doubleSlap, 
         Moves.lunarDance,
+        Moves.memento,
         Moves.snatch);
     }
 

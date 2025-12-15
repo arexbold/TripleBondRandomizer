@@ -915,18 +915,21 @@ public class Gen4Constants {
         nonBadItems = allowedItems.copy();
 
         nonBadItems.banSingles(Items.oddKeystone, Items.griseousOrb, Items.soulDew, Items.lightBall,
-                Items.oranBerry, Items.quickPowder, Items.smokeBall, Items.expShare, Items.revive, 
+                Items.oranBerry, Items.smokeBall, Items.expShare, Items.revive, 
                 Items.maxRevive, Items.revivalHerb, Items.sacredAsh, Items.heartScale, Items.rareCandy, 
-                Items.blackSludge, Items.leftovers, Items.focusBand, Items.focusSash, Items.shellBell, Items.shedShell);
+                Items.blackSludge, Items.leftovers, Items.focusBand, Items.focusSash, Items.shellBell, 
+                Items.shedShell, Items.luckyPunch, Items.metalPowder, Items.bigRoot);
         nonBadItems.banRange(Items.shoalSalt,2);
         nonBadItems.banRange(Items.growthMulch, 4); // mulch
         nonBadItems.banRange(Items.adamantOrb, 2); // orbs
         nonBadItems.banRange(Items.mail1, 12); // mails
-        nonBadItems.banRange(Items.figyBerry, 25); // berries without useful battle effects
-        nonBadItems.banRange(Items.luckyPunch, 4); // pokemon specific
+        nonBadItems.banRange(Items.figyBerry, 10); // berries without useful battle effects
+        nonBadItems.banRange(Items.cornnBerry, 9); // berries without useful battle effects 2
         nonBadItems.banRange(Items.redScarf, 5); // contest scarves
         nonBadItems.banRange(Items.masterBall, 16); // no balls
         nonBadItems.banRange(Items.powerBracer, 6); // no EV bands
+        nonBadItems.banRange(Items.blueFlute, 5); // no flutes
+        nonBadItems.banRange(Items.rootFossil, 7);
 
         regularShopItems = new ArrayList<>();
 

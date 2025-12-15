@@ -28,40 +28,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Version {
-    public static final int VERSION = 322; // Increment by 1 for new version. Updated for 4.6.1.
-    public static final String VERSION_STRING = "4.6.1";
+    public static final int VERSION = 324; // Increment by 1 for new version. Updated for TripleBond 0.4.2
+    public static final String VERSION_STRING = "TripleBond 0.4.2";
 
     public static final Map<Integer,String> oldVersions = setupVersionsMap();
 
     private static Map<Integer,String> setupVersionsMap() {
         Map<Integer,String> map = new HashMap<>();
 
-        map.put(100, "1.0.1a");
-        map.put(102, "1.0.2a");
-        map.put(110, "1.1.0");
-        map.put(111, "1.1.1");
-        map.put(112, "1.1.2");
-        map.put(120, "1.2.0a");
-        map.put(150, "1.5.0");
-        map.put(160, "1.6.0a");
-        map.put(161, "1.6.1");
-        map.put(162, "1.6.2");
-        map.put(163, "1.6.3b");
-        map.put(170, "1.7.0b");
-        map.put(171, "1.7.1");
-        map.put(172, "1.7.2");
-        map.put(310, "3.1.0");
-        map.put(311, "4.0.0");
-        map.put(312, "4.0.1");
-        map.put(313, "4.0.2");
-        map.put(314, "4.1.0");
-        map.put(315, "4.2.0");
-        map.put(316, "4.2.1");
-        map.put(317, "4.3.0");
-        map.put(318, "4.4.0");
-        map.put(319, "4.5.0");
-        map.put(320, "4.5.1");
-        map.put(321, "4.6.0");
+        // Original UPR-ZX version forked from
+        map.put(322, "4.6.1");
+        
+        // TripleBond versions
+        map.put(323, "TripleBond 0.4.1");
 
         // Latest version - when version is updated, add the old version as an explicit put
         map.put(VERSION, VERSION_STRING);
