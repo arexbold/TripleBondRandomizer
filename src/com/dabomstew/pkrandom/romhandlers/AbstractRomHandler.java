@@ -567,13 +567,20 @@ public abstract class AbstractRomHandler implements RomHandler {
                         && pk.ability1 != Abilities.forecast
                         && pk.ability2 != Abilities.forecast
                         && pk.ability3 != Abilities.forecast) {
+                    
+                    // Extra ban list for any Pokemon that have more than 420 BST
+                    List<Integer> extraBans = new ArrayList<>(bannedAbilities);
+                    if (pk.bstForPowerLevels() > 420) {
+                        extraBans.add(Abilities.hugePower);
+                        extraBans.add(Abilities.purePower);
+                    }
+                    
                     // Pick first ability
-                    pk.ability1 = pickRandomAbility(maxAbility, bannedAbilities, weighDuplicatesTogether);
-
+                    pk.ability1 = pickRandomAbility(maxAbility, extraBans, weighDuplicatesTogether);
                     // Second ability?
                     if (ensureTwoAbilities || AbstractRomHandler.this.random.nextDouble() < 0.5) {
                         // Yes, second ability
-                        pk.ability2 = pickRandomAbility(maxAbility, bannedAbilities, weighDuplicatesTogether,
+                        pk.ability2 = pickRandomAbility(maxAbility, extraBans, weighDuplicatesTogether,
                                 pk.ability1);
                     } else {
                         // Nope
@@ -612,13 +619,21 @@ public abstract class AbstractRomHandler implements RomHandler {
                         && pk.ability1 != Abilities.forecast
                         && pk.ability2 != Abilities.forecast
                         && pk.ability3 != Abilities.forecast) {
+                    
+                    // Extra ban list for any Pokemon that have more than 420 BST
+                    List<Integer> extraBans = new ArrayList<>(bannedAbilities);
+                    if (pk.bstForPowerLevels() > 420) {
+                        extraBans.add(Abilities.hugePower);
+                        extraBans.add(Abilities.purePower);
+                    }
+                    
                     // Pick first ability
-                    pk.ability1 = this.pickRandomAbility(maxAbility, bannedAbilities, weighDuplicatesTogether);
+                    pk.ability1 = this.pickRandomAbility(maxAbility, extraBans, weighDuplicatesTogether);
 
                     // Second ability?
                     if (ensureTwoAbilities || this.random.nextDouble() < 0.5) {
                         // Yes, second ability
-                        pk.ability2 = this.pickRandomAbility(maxAbility, bannedAbilities, weighDuplicatesTogether,
+                        pk.ability2 = this.pickRandomAbility(maxAbility, extraBans, weighDuplicatesTogether,
                                 pk.ability1);
                     } else {
                         // Nope

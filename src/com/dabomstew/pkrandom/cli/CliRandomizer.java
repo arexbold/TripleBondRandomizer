@@ -9,6 +9,7 @@ import com.dabomstew.pkrandom.romhandlers.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -98,11 +99,9 @@ public class CliRandomizer {
                     byte[] out = baos.toByteArray();
                     if (saveLog) {
                         try {
+                            String base64Log = Base64.getEncoder().encodeToString(out);
                             FileOutputStream fos = new FileOutputStream(filename + ".log");
-                            fos.write(0xEF);
-                            fos.write(0xBB);
-                            fos.write(0xBF);
-                            fos.write(out);
+                            fos.write(base64Log.getBytes("UTF-8"));
                             fos.close();
                         } catch (IOException e) {
                             printWarning("Could not write log.");
