@@ -144,19 +144,19 @@ public class Pokemon implements Comparable<Pokemon> {
         int stat_base = 0;
 
         if (originalBST < 300) {
-            hp_base = 20;
+            hp_base = 15;
             stat_base = 15;
         } else if (originalBST < 400) {
-            hp_base = 25;
+            hp_base = 20;
             stat_base = 20;
         } else if (originalBST < 500) {
-            hp_base = 30;
+            hp_base = 20;
             stat_base = 25;
         } else if (originalBST < 600) {
-            hp_base = 35;
+            hp_base = 25;
             stat_base = 30;
         } else {
-            hp_base = 40;
+            hp_base = 30;
             stat_base = 35;
         }
 
@@ -255,14 +255,14 @@ public class Pokemon implements Comparable<Pokemon> {
             }
 
             // Randomly make HP or SPE dominant
-            if (random.nextDouble() < 0.30) { // 30% chance to be dominant in HP
+            if (random.nextDouble() < 0.15) { // 15% chance to be dominant in HP
                 isDominant[0] = true; // HP
                 if (random.nextDouble() < 0.50) { // 50% chance to make it primary too
                     isPrimary[0] = true;
                 }
             }
 
-            if (random.nextDouble() < 0.25) { // 25% chance to be dominant in SPE
+            if (random.nextDouble() < 0.20) { // 20% chance to be dominant in SPE
                 isDominant[5] = true; // SPE
                 if (random.nextDouble() < 0.50) { // 50% chance to make it primary too
                     isPrimary[5] = true;

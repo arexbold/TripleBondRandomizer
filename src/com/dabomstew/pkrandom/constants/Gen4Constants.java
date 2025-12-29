@@ -918,7 +918,7 @@ public class Gen4Constants {
                 Items.oranBerry, Items.smokeBall, Items.expShare, Items.revive, 
                 Items.maxRevive, Items.revivalHerb, Items.sacredAsh, Items.heartScale, Items.rareCandy, 
                 Items.blackSludge, Items.leftovers, Items.focusBand, Items.focusSash, Items.shellBell, 
-                Items.shedShell, Items.luckyPunch, Items.metalPowder, Items.bigRoot);
+                Items.shedShell, Items.luckyPunch, Items.metalPowder, Items.bigRoot, Items.toxicOrb);
         nonBadItems.banRange(Items.shoalSalt,2);
         nonBadItems.banRange(Items.growthMulch, 4); // mulch
         nonBadItems.banRange(Items.adamantOrb, 2); // orbs
