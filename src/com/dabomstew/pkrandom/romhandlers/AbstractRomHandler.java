@@ -7545,6 +7545,7 @@ public abstract class AbstractRomHandler implements RomHandler {
         Moves.doubleSlap, 
         Moves.lunarDance,
         Moves.memento,
+        Moves.helpingHand,
         Moves.snatch);
     }
 
